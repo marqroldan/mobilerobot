@@ -1,0 +1,112 @@
+
+checkRow(robotRowNum, withinRow, data, video_capture) {
+	if robotRowNum in data and withinRow is false
+		redDetails = getRedDetails()
+		while red is still found
+			laneDetails = getLaneDetails(ignore the blue side where the red is found)
+			if laneCheck(laneDetails) is true
+				moveforward
+			else
+				stop moving 
+			redDetails = getRedDetails()
+		
+
+}
+
+laneCheck(laneDetails) {
+	if lane dimensions are ok
+		if centroid of lane not within bounds
+			while not within bounds
+				stop moving
+				laneDetails = getLaneDetails()
+				if centroid_x < left bound limit
+					rotate to left 
+				else
+					rotate to right
+		return True
+	else
+		return False
+}
+
+redCheck(redDetails) {
+	if saw red and dimensions ok 
+		foundRed = true
+		if red within bounds 
+			stop moving
+			#check what it is for and do action 
+			if withinRow == false 
+				robotRowNum++
+				withinRow = checkRow(robotRowNum, withinRow, data, video_capture);
+			else 
+				currDot++
+				checkDot(robotRowNum, withinRow, data);
+	else:
+		foundRed = false
+}
+
+foundRed = false
+withinRow = false
+robotRowNum = 0
+
+while true
+	laneDetails = getLaneDetails()
+	laneFound = laneCheck(laneDetails)
+	
+	if there is lane
+		start moving 
+		redDetails = getRedDetails()
+		redFound = redCheck(redDetails)
+	else 
+		stop moving
+		
+=============================================================================================================================================================================
+
+
+flags:
+	- sawTrueRed
+	- sawLane
+	- masterOff
+	- movementOverride
+	- lastMovement
+	- currentRow
+	- currentDot
+
+files structure
+
+main 
+	redChecking 
+	laneChecking 
+	movement
+
+
+
+
+=============================================================================================================================================================================
+:::MOVING FORWARD LOGIC::::
+:::::::::::::::::::::::::::::::::::::::::
+
+while true
+	laneDetails = getLaneDetails()
+	if centroid is out of bounds
+		stop moving
+		while centroid is out of bounds
+			if centroid < left limit
+				rotate to left
+			else 
+				rotate to right
+	else
+		move forward
+		
+
+
+=============================================================================================================================================================================
+:::RED CHECK::::
+:::::::::::::::::::::::::::::::::::::::::
+
+while true
+	redDetails = getRedDetails()
+	if red meets required dimensions
+		stop the movement
+		redPurpose = check what thet red is for 
+		if purpose is for row 
+
