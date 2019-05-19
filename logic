@@ -93,10 +93,12 @@ while true
 	if centroid is out of bounds
 		stop moving
 		while centroid is out of bounds
+		movementOverride set to RED
 			if centroid < left limit
 				rotate to left
 			else 
 				rotate to right
+		movementOverride set to null
 	else
 		move forward
 		
@@ -127,9 +129,20 @@ while true
 			increment currentDot 
 			if currentDot is in the list to go to based on the currentRow
 				trigger the paper dispenser 
+				decrement numberOfStopsForRow
 				while the paper dispenser is still running
 					pass
 				
+				if numberOfStopsForRow > 0 {
+					while green not found {
+						move forward
+					}
+				}
+				else {
+					while green not found {
+						move forward
+					}
+				}
 		else 
 			increment currentRow
 			if currentRow is in the list to go to
