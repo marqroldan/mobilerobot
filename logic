@@ -63,13 +63,16 @@ while true
 
 
 flags:
+	- arguments
 	- sawTrueRed
 	- sawLane
 	- masterOff
 	- movementOverride
 	- lastMovement
+	- inLane
 	- currentRow
 	- currentDot
+	- numberOfStopsForRow
 
 files structure
 
@@ -103,10 +106,38 @@ while true
 :::RED CHECK::::
 :::::::::::::::::::::::::::::::::::::::::
 
+goInsideLane() {
+	while no green found {
+		move forward
+	}
+	while found lane {
+		rotate based on the placement of red 
+	}
+	while no lane found {
+		rotate based on the placement of red
+	}
+}
+
 while true
 	redDetails = getRedDetails()
 	if red meets required dimensions
+		movementOverride set to RED
 		stop the movement
-		redPurpose = check what thet red is for 
-		if purpose is for row 
+		if inLane is true
+			increment currentDot 
+			if currentDot is in the list to go to based on the currentRow
+				trigger the paper dispenser 
+				while the paper dispenser is still running
+					pass
+				
+		else 
+			increment currentRow
+			if currentRow is in the list to go to
+				perform goInsideLane process
+				set inLane to true
+				set currentDot to 0
+				set numberOfStopsForRow to the value of the places in the respective row
+			else
+				move forward until you find the green ignoring the blue where the red is located
+		movementOverride set to null
 
