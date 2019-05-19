@@ -64,6 +64,8 @@ while true
 
 flags:
 	- arguments
+	-- Total Number of Stops 
+	-- Stops per Rows
 	- sawTrueRed
 	- sawLane
 	- masterOff
@@ -73,6 +75,7 @@ flags:
 	- currentRow
 	- currentDot
 	- numberOfStopsForRow
+	- returning
 
 files structure
 
@@ -91,9 +94,9 @@ main
 while true
 	laneDetails = getLaneDetails()
 	if centroid is out of bounds
+		movementOverride set to LANE
 		stop moving
 		while centroid is out of bounds
-		movementOverride set to RED
 			if centroid < left limit
 				rotate to left
 			else 
@@ -108,7 +111,7 @@ while true
 :::RED CHECK::::
 :::::::::::::::::::::::::::::::::::::::::
 
-goInsideLane() {
+findLaneRotateBasedOnRed() {
 	while no green found {
 		move forward
 	}
@@ -126,31 +129,50 @@ while true
 		movementOverride set to RED
 		stop the movement
 		if inLane is true
-			increment currentDot 
-			if currentDot is in the list to go to based on the currentRow
-				trigger the paper dispenser 
-				decrement numberOfStopsForRow
-				while the paper dispenser is still running
-					pass
-				
-				if numberOfStopsForRow > 0 {
-					while green not found {
-						move forward
+			if returning is True
+				decrement currentDot
+				if currentDot < 1 {
+					if totalNumberOfStops < 1 {
+						findLaneRotateBasedOnRed()
+						inLane = False
 					}
 				}
 				else {
+					move forward until red is not found 
+					set returning to False
+				}
+			else
+				increment currentDot 
+				if currentDot is in the list to go to based on the currentRow
+					decrement totalNumberOfStops
 					while green not found {
 						move forward
 					}
-				}
+					trigger the paper dispenser 
+					decrement numberOfStopsForRow
+					while the paper dispenser is still running
+						pass
+					
+					if numberOfStopsForRow = 0 {
+						perform findLaneRotateBasedOnRed process
+						set returning to True
+					}
+				else
+					while green not found {
+						move forward
+					}
 		else 
-			increment currentRow
-			if currentRow is in the list to go to
-				perform goInsideLane process
-				set inLane to true
-				set currentDot to 0
-				set numberOfStopsForRow to the value of the places in the respective row
-			else
-				move forward until you find the green ignoring the blue where the red is located
+			if returning is True 
+				decrement currentRow
+				keep moving forward until red is gone
+			else 
+				increment currentRow
+				if currentRow is in the list to go to
+					perform findLaneRotateBasedOnRed process
+					set inLane to true
+					set currentDot to 0
+					set numberOfStopsForRow to the value of the places in the respective row
+				else
+					move forward until you find the green ignoring the blue where the red is located
 		movementOverride set to null
 
