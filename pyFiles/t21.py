@@ -220,7 +220,7 @@ def checkDot(video_capture, centerX_LANE, centerX_RED):
 				elif currentDot < 1 and numberOfStops < 1:
 					cd_frame = turnBasedOnDirection(video_capture, cd_lastDirection, True);
 					cd_inLane = False
-					goingHome = True
+					cd_goingHome = True
 					
 			else:
 				cd_currentDot = currentDot + 1
@@ -247,7 +247,7 @@ def checkDot(video_capture, centerX_LANE, centerX_RED):
 			else:
 				moveForwardFindGreen(video_capture)
 			
-	return (cd_frame, cd_inLane, cd_currentRow, cd_currentDot, cd_numberOfStopsForRow, cd_returning, cd_foundRed, cd_lastDirection, cd_numberOfStops)
+	return (cd_frame, cd_inLane, cd_currentRow, cd_currentDot, cd_numberOfStopsForRow, cd_returning, cd_foundRed, cd_lastDirection, cd_numberOfStops, cd_goingHome)
 
 ####### VARIABLES #########
 Kernel_size=15
@@ -302,13 +302,13 @@ while True:
 	if foundLane:
 		if foundRed:
 			move_py.movement_func(99)
-			frame, inLane, currentRow, currentDot, numberOfStopsForRow, returning, foundRed = checkDot(video_capture)
+			frame, inLane, currentRow, currentDot, numberOfStopsForRow, returning, foundRed, lastDirection, numberOfStops, goingHome  = checkDot(video_capture, centerX_LANE, centerX_RED)
 		
 		frame = fixLane(centerX_LANE, centerY_LANE, video_capture)
 		
 	if foundRed:
 		move_py.movement_func(99)
-		frame, inLane, currentRow, currentDot, numberOfStopsForRow, returning, foundRed, lastDirection, numberOfStops = checkDot(video_capture, centerX_LANE, centerX_RED)
+		frame, inLane, currentRow, currentDot, numberOfStopsForRow, returning, foundRed, lastDirection, numberOfStops, goingHome = checkDot(video_capture, centerX_LANE, centerX_RED)
 		frame = fixLane(centerX_LANE, centerY_LANE, video_capture)
 	
 	move_py.movement_func(1)
@@ -317,4 +317,3 @@ while True:
 		move_py.movement_func(99)
 		pyDie(video_capture)
 		
-	cv2.imshow(imgHSV)

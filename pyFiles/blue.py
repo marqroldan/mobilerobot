@@ -12,44 +12,244 @@ import json
 import argparse
 import imutils
 
+def initialize_robo():
+	#Kill any instance of the application
+	#0 = STOP | 1 = GO | 2 = PAUSE
+	move_py.movement_func(12345)
+
+
 def pyDie(video_capture):
 	video_capture.release()
 	cv2.destroyAllWindows()
 	sys.exit()
 	return
 
-def doTurnProcedure(turnDirection):
-	print("TURNING: " + str(turnDirection))
-	if turnDirection < 0:
-		move_py.movement_func(1)
-		time.sleep(0.4)
-		move_py.movement_func(2)
-	else:
-		move_py.movement_func(1)
-		time.sleep(0.4)
-		move_py.movement_func(3)
-	
-	time.sleep(3)
-	return
-
-
 def doStopProcedure():
 	print("ROBOT STOPPING")
 	move_py.movement_func(1)
-	time.sleep(0.4)
+	time.sleep(0.8)
 	move_py.movement_func(99)
 	time.sleep(3)
 	return
 
-
 def doTurnAroundProcedure():
 	print("ROBOT TURNING AROUND")
+	move_py.movement_func(1)
+	time.sleep(0.15)
 	move_py.movement_func(8)
 	#time.sleep(3)
 	return
 
+def redCheck(frame):
+	#::FOR RED (H, S, V)
+	rangeMinRed = np.array([0, 1, 0], np.uint8)
+	rangeMaxRed = np.array([10, 255, 255], np.uint8)
+	centerX = -1
+	centerY = -1
+	width = 0
+	height = 0
+	rect_angle = 0
+	
+	imgThreshRed = cv2.inRange(frame, rangeMinRed, rangeMaxRed)
 
+	### RED DETECTION
+	_,contoursRed, hierarchyRed = cv2.findContours(imgThreshRed,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+	areasRed = [cv2.contourArea(c) for c in contoursRed]
+	
+	foundRed = False
+	if np.any(areasRed):
+		foundRed = True
+		max_index = np.argmax(areasRed)
+		cnt=contoursRed[max_index]
+		
+		(centerX, centerY), (width, height), rect_angle = cv2.minAreaRect(cnt)
+		#insert dimension condition here
+	
+	return (foundRed, centerX, centerY, width, height, rect_angle)
 
+def laneCheck(frame):
+	#::FOR BLUE (H, S, V)
+	rangeMin = np.array([100, 160, 0], np.uint8)
+	rangeMax = np.array([140, 255, 255], np.uint8)
+	centerX = -1
+	centerY = -1
+	width = 0
+	height = 0
+	rect_angle = 0
+	imgThresh = cv2.inRange(frame, rangeMin, rangeMax)
+	
+	_, contours, hierarchy = cv2.findContours(imgThresh,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+	areas = [cv2.contourArea(c) for c in contours]
+	
+	foundLane = False
+	if np.any(areas):
+		foundLane = True
+		allTry = 1
+		max_index = np.argmax(areas)
+		cnt=contours[max_index]
+		(centerX, centerY), (width, height), rect_angle = cv2.minAreaRect(cnt)
+
+	
+	return (foundLane, centerX, centerY, width, height, rect_angle)
+
+def fixLane(centerX, centerY, video_capture):
+	if centerX <= 170 or centerX >= 230:
+		#Stop All Movement
+		move_py.movement_func(99)
+		outOfLane = True
+		
+		while outOfLane == True:
+			if centerX <= 170:
+				#move to left
+				move_py.movement_func(6)
+			elif centerX >= 230:
+				#move to right
+				move_py.movement_func(6)
+				
+			frame = video_capture.read()
+			orig = imutils.resize(frame, width=400)
+			frame = orig
+			difference = 0
+			imgHSV = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
+			foundLane, centerX_LANE, centerY_LANE, width_LANE, height_LANE, rect_angle_LANE = laneCheck(imgHSV)
+			if centerX_LANE <= 230 and centerX_LANE >= 170:
+				#turn Off Movement
+				move_py.movement_func(99)
+				outOfLane = False
+				
+	return frame
+
+def moveForwardFindGreen(video_capture):
+	greenFound = False 
+	
+	while greenFound == False:
+		frame = video_capture.read()
+		orig = imutils.resize(frame, width=400)
+		frame = orig
+		difference = 0
+		frame = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
+		foundLane, centerX_LANE, centerY_LANE, width_LANE, height_LANE, rect_angle_LANE = laneCheck(frame)
+		if foundLane:
+			frame = fixLane(centerX_LANE, centerY_LANE, video_capture)
+		
+		#::FOR GREEN (H, S, V)
+		rangeMin = np.array([60, 100, 50], np.uint8)
+		rangeMax = np.array([60, 255, 255], np.uint8)
+		centerX = -1
+		centerY = -1
+		width = 0
+		height = 0
+		rect_angle = 0
+		imgThresh = cv2.inRange(frame, rangeMin, rangeMax)
+	
+		_, contours, hierarchy = cv2.findContours(imgThresh,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+		areas = [cv2.contourArea(c) for c in contours]
+		if np.any(areas):
+			foundLane = True
+			allTry = 1
+			max_index = np.argmax(areas)
+			cnt=contours[max_index]
+			(centerX, centerY), (width, height), rect_angle = cv2.minAreaRect(cnt)
+			#dimension condition here
+			greenFound = True
+			move_py.movement_func(99)
+	
+	return (frame, foundLane)
+
+def turnBasedOnDirection(video_capture, direction, green = False):
+	if green == True:
+		frame, foundLane = moveForwardFindGreen(video_capture)
+	else:
+		frame = video_capture.read()
+		orig = imutils.resize(frame, width=400)
+		frame = orig
+		difference = 0
+		frame = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
+		foundLane, centerX_LANE, centerY_LANE, width_LANE, height_LANE, rect_angle_LANE = laneCheck(frame)
+	
+	flip = False
+	while foundLane == True:
+		if (direction < 0):
+			move_py.movement_func(6)
+		else:
+			move_py.movement_func(7)
+		frame = video_capture.read()
+		orig = imutils.resize(frame, width=400)
+		frame = orig
+		difference = 0
+		frame = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
+		foundLane, centerX_LANE, centerY_LANE, width_LANE, height_LANE, rect_angle_LANE = laneCheck(frame)
+		if foundLane == False:
+			flip = True
+			foundLane = True
+		elif foundLane == True and flip == True:
+			break
+			
+	return frame
+
+def checkDot(video_capture, centerX_LANE, centerX_RED):
+	#frame, inLane, currentRow, currentDot, numberOfStopsForRow, returning, foundRed 
+	cd_frame = frame
+	cd_inLane = inLane
+	cd_currentRow = currentRow
+	cd_currentDot = currentDot
+	cd_numberOfStopsForRow = numberOfStopsForRow
+	cd_returning = returning
+	cd_foundRed = foundRed
+	cd_lastDirection = lastDirection
+	cd_numberOfStops = numberOfStops
+	# < 0 left | > 0 right
+		
+	if goingHome == True:
+		cd_currentRow = currentRow - 1
+		if cd_currentRow < 1:
+			moveForwardFindGreen(video_capture)
+	else:
+		if (centerX_RED < centerX_LANE):
+			cd_lastDirection = -1
+		else:
+			cd_lastDirection = 1
+		if inLane == True:
+			if returning == True:
+				cd_currentDot = currentDot - 1
+				
+				if currentDot < 1 and numberOfStops > 1:
+					#go to the next row
+					cd_frame = turnBasedOnDirection(video_capture, cd_lastDirection * -1, True);
+					cd_inLane = False
+				elif currentDot < 1 and numberOfStops < 1:
+					cd_frame = turnBasedOnDirection(video_capture, cd_lastDirection, True);
+					cd_inLane = False
+					cd_goingHome = True
+					
+			else:
+				cd_currentDot = currentDot + 1
+				
+				if (str(cd_currentDot) in definedStops[str(currentRow)]):
+					cd_numberOfStopsForRow = numberOfStopsForRow - 1
+					cd_numberOfStops = numberOfStops - 1
+					move_py.movement_func(99)
+					moveForwardFindGreen(video_capture)
+					#do robot procedure
+					print("Doing robot procedure")
+					time.sleep(5)
+				
+				if (numberOfStopsForRow < 1):
+					cd_returning = True
+					turnBasedOnDirection(video_capture, lastDirection)
+		else:
+			cd_currentRow = currentRow + 1
+			if str(cd_currentRow) in definedStops:
+				cd_frame = turnBasedOnDirection(video_capture, cd_lastDirection, True);
+				cd_inLane = True
+				cd_numberOfStopsForRow = count(definedStops[str(cd_currentRow)])
+				cd_currentDot = 0
+			else:
+				moveForwardFindGreen(video_capture)
+			
+	return (cd_frame, cd_inLane, cd_currentRow, cd_currentDot, cd_numberOfStopsForRow, cd_returning, cd_foundRed, cd_lastDirection, cd_numberOfStops, cd_goingHome)
+
+####### VARIABLES #########
 Kernel_size=15
 low_threshold=40
 high_threshold=120
@@ -60,142 +260,51 @@ theta=np.pi/180
 minLineLength=100
 maxLineGap=1
 
+initialize_robo()
 
-#For black
-Hmin = 0
-Hmax = 180
-Smin = 0
-Smax = 255
-Vmin = 0
-Vmax = 255
+#	- arguments
+#	-- Total Number of Stops 
+#	-- Stops per Rows
+#	- sawTrueRed
+#	- sawLane
+#	- masterOff
+#	- movementOverride
+lastDirection = 0
+inLane = False
+currentRow = 0
+currentDot = 0
+numberOfStopsForRow = 0
+returning = False
+goingHome = False
 
-#For blue
-Hmin = 100
-Hmax = 140
-Smin = 160
-Smax = 255
-Vmin = 0
-Vmax = 255
-
-
-
-rangeMin = np.array([Hmin, Smin, Vmin], np.uint8)
-rangeMax = np.array([Hmax, Smax, Vmax], np.uint8)
-
-
-#For red
-Hmin = 0
-Hmax = 10
-Smin = 1
-Smax = 255
-Vmin = 0
-Vmax = 255
-
-
-rangeMinRed = np.array([Hmin, Smin, Vmin], np.uint8)
-rangeMaxRed = np.array([Hmax, Smax, Vmax], np.uint8)
-
-#For red
-Hmin = 170
-Hmax = 180
-Smin = 1
-Smax = 255
-Vmin = 0
-Vmax = 255
-
-
-rangeMinRed1 = np.array([Hmin, Smin, Vmin], np.uint8)
-rangeMaxRed1 = np.array([Hmax, Smax, Vmax], np.uint8)
-
-minArea = 50
-angle = 0
-
-continue1 = False
-#move_py.movement_func(sys.argv[1])
-#VARS DEFAULT
-leaving=False
-returning=False
-hasTurned=False
-sawDotForTurn=0
-sawDotForStop=0
-turnedAround = False
-turnDirection=0
-dontDo = False
-redBuff = 100
-goHome = False
-lastLineDirection = 0
-mayNakitangRed = False
-
+####### START STREAM #########
 video_capture = WebcamVideoStream(src='http://127.0.0.1:8081/').start()
-#video_capture = cv2.VideoCapture(-1)
-#numberOfStops = -1
-#definedStops = array ( 1 => array(1, 5) )
-autoFile = open("autoStart.txt","w")
-autoFile.write('1')
-autoFile.close()
-fs = False 
 
-#Initialize camera
+print(sys.argv[1])
+if len(sys.argv) > 1:
+	definedStops = json.loads(sys.argv[1])
+	numberOfStops = int(sys.argv[2])
+else:
+	print("Not enough parameters given. Exiting")
+	pyDie(video_capture)
 
-blank_image = np.zeros((30,100,3), np.uint8)
-agi = 1
-farCenterBuff = 1
-lastTryAngle = 0
-moveTry = 0
-allTry = 0
-LaneArea = 100
 while True:
-	
-	angle = 0
+	#start capturing frames for processing
 	frame = video_capture.read()
-	orig = imutils.resize(frame, width=200)
+	orig = imutils.resize(frame, width=400)
 	frame = orig
-	imgHSV = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)	
-	imgThresh = cv2.inRange(imgHSV, rangeMin, rangeMax)
-	imgErode = imgThresh
+	difference = 0
+	imgHSV = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
 	
-	### START LANE DETECTION
-	_, contours, hierarchy = cv2.findContours(imgErode,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
-	areas = [cv2.contourArea(c) for c in contours]
+	foundLane, centerX_LANE, centerY_LANE, width_LANE, height_LANE, rect_angle_LANE = laneCheck(imgHSV)
 	
-	if np.any(areas):
-		allTry = 1
-		max_index = np.argmax(areas)
-		cnt=contours[max_index]
+	if foundLane:
+		frame = fixLane(centerX_LANE, centerY_LANE, video_capture)
 		
-		(arx, ary), (brx, bry), rect_angle = cv2.minAreaRect(cnt)
-		
-		width = brx
-		height = bry
-		#print("arx: ", arx, " | ary : ", ary)
-		#print("width: ", width, " | height : ", height)
-		
-		print("width1: ", (brx))
-		
-		if (False):
-			print("NO LANE FOUND. WIDTH > HEIGHT")
-		else:
-			angle = 90 - rect_angle if (width < height) else -rect_angle
-			angle -= 90
-			bax,bay,w,h = cv2.boundingRect(cnt)
-			print("x: ", bax, " | y : ", bay)
-			print("width: ", w, " | height : ", h)
-			
-	#		cv2.rectangle(frame, (int(arx), int(ary)), (int(arx+width), int(ary+height)), (0, 255, 0), 2)
-	#		cv2.drawContours(frame, [cnt], -1, (0,255,0), 2)
-	cv2.imshow("line detect test", frame)
-	agi +=1
-	
-	if(agi>=20): 
-		agi = 1
+	move_py.movement_func(1)
 	
 	if cv2.waitKey(1) & 0xFF == ord('q'):
 		move_py.movement_func(99)
 		pyDie(video_capture)
+		
 	
-
-# When everything is done, release the capture
-
-
-
-
