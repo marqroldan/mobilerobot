@@ -52,7 +52,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
   def stopAuto(self):
     autoFile = open('/home/pi/masterOff.txt','w')
     autoFile.write('0')
-	time.sleep(2)
+    time.sleep(2)
     autoFile.close()
  
   def on_message(self, message):
