@@ -69,12 +69,12 @@ Smax = 255
 Vmin = 0
 Vmax = 255
 
-#For blue
-Hmin = 100
-Hmax = 140
-Smin = 160
+#For green
+Hmin = 60
+Hmax = 60
+Smin = 100
 Smax = 255
-Vmin = 0
+Vmin = 50
 Vmax = 255
 
 
@@ -82,30 +82,6 @@ Vmax = 255
 rangeMin = np.array([Hmin, Smin, Vmin], np.uint8)
 rangeMax = np.array([Hmax, Smax, Vmax], np.uint8)
 
-
-#For red
-Hmin = 0
-Hmax = 10
-Smin = 1
-Smax = 255
-Vmin = 0
-Vmax = 255
-
-
-rangeMinRed = np.array([Hmin, Smin, Vmin], np.uint8)
-rangeMaxRed = np.array([Hmax, Smax, Vmax], np.uint8)
-
-#For red
-Hmin = 170
-Hmax = 180
-Smin = 1
-Smax = 255
-Vmin = 0
-Vmax = 255
-
-
-rangeMinRed1 = np.array([Hmin, Smin, Vmin], np.uint8)
-rangeMaxRed1 = np.array([Hmax, Smax, Vmax], np.uint8)
 
 minArea = 50
 angle = 0
@@ -151,40 +127,37 @@ while True:
 	orig = imutils.resize(frame, width=400)
 	frame = orig
 	imgHSV = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)	
-	imgThresh = cv2.inRange(imgHSV, rangeMinRed, rangeMaxRed)
-	imgErode = imgThresh
+	imgThreshRed = cv2.inRange(imgHSV, np.array([0, 1, 0], np.uint8), np.array([10, 255, 255], np.uint8))
 	
 	### START LANE DETECTION
-	_, contours, hierarchy = cv2.findContours(imgErode,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+	_, contours, hierarchy = cv2.findContours(imgThreshRed,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
 	areas = [cv2.contourArea(c) for c in contours]
 	
 	if np.any(areas):
 		allTry = 1
 		max_index = np.argmax(areas)
 		cnt=contours[max_index]
-		#centroid arx, ary
-		(arx, ary), (bry, brx), rect_angle = cv2.minAreaRect(cnt)
+		
+		(arx, ary), (brx, bry), rect_angle = cv2.minAreaRect(cnt)
 		
 		width = brx
-		if(width < 60):
-			continue
 		height = bry
-		print("arx: ", arx, " | ary : ", ary)
-		print("width: ", width, " | height : ", height)
-		print("rect; ", rect_angle)
+		#print("arx: ", arx, " | ary : ", ary)
+		#print("width: ", width, " | height : ", height)
 		
+		print("width1: ", (brx))
 		
 		if (False):
 			print("NO LANE FOUND. WIDTH > HEIGHT")
-		else:
+		elif (width * height) > 3000:
 			angle = 90 - rect_angle if (width < height) else -rect_angle
 			angle -= 90
 			bax,bay,w,h = cv2.boundingRect(cnt)
 			print("x: ", bax, " | y : ", bay)
 			print("width: ", w, " | height : ", h)
 			
-			cv2.rectangle(frame, (int(arx), int(ary)), (int(arx+width), int(ary+height)), (0, 255, 0), 2)
-			cv2.drawContours(frame, [cnt], -1, (0,255,0), 2)
+	#		cv2.rectangle(frame, (int(arx), int(ary)), (int(arx+width), int(ary+height)), (0, 255, 0), 2)
+	#		cv2.drawContours(frame, [cnt], -1, (0,255,0), 2)
 	cv2.imshow("line detect test", frame)
 	agi +=1
 	

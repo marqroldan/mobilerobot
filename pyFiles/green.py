@@ -124,14 +124,13 @@ while True:
 	
 	angle = 0
 	frame = video_capture.read()
-	orig = imutils.resize(frame, width=200)
+	orig = imutils.resize(frame, width=400)
 	frame = orig
 	imgHSV = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)	
-	imgThresh = cv2.inRange(imgHSV, rangeMin, rangeMax)
-	imgErode = imgThresh
+	imageGreen = cv2.inRange(imgHSV, np.array([40, 100, 150], np.uint8), np.array([80, 255, 255], np.uint8))
 	
 	### START LANE DETECTION
-	_, contours, hierarchy = cv2.findContours(imgErode,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+	_, contours, hierarchy = cv2.findContours(imageGreen,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
 	areas = [cv2.contourArea(c) for c in contours]
 	
 	if np.any(areas):
@@ -150,7 +149,7 @@ while True:
 		
 		if (False):
 			print("NO LANE FOUND. WIDTH > HEIGHT")
-		else:
+		elif (width * height) > 3000:
 			angle = 90 - rect_angle if (width < height) else -rect_angle
 			angle -= 90
 			bax,bay,w,h = cv2.boundingRect(cnt)

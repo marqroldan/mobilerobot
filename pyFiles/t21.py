@@ -17,32 +17,7 @@ def pyDie(video_capture):
 	cv2.destroyAllWindows()
 	sys.exit()
 	return
-
-def laneCheck(frame):
-	#::FOR BLUE (H, S, V)
-	rangeMin = np.array([100, 160, 0], np.uint8)
-	rangeMax = np.array([140, 255, 255], np.uint8)
-	centerX = -1
-	centerY = -1
-	width = 0
-	height = 0
-	rect_angle = 0
-	imgThresh = cv2.inRange(frame, rangeMin, rangeMax)
 	
-	_, contours, hierarchy = cv2.findContours(imgThresh,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
-	areas = [cv2.contourArea(c) for c in contours]
-	
-	foundLane = False
-	if np.any(areas):
-		foundLane = True
-		allTry = 1
-		max_index = np.argmax(areas)
-		cnt=contours[max_index]
-		(centerX, centerY), (width, height), rect_angle = cv2.minAreaRect(cnt)
-
-	
-	return (foundLane, centerX, centerY, width, height, rect_angle)
-
 def fixLane(centerX, centerY, video_capture):
 	fn_frame = video_capture.read()
 	tfix = 0.01
@@ -67,7 +42,7 @@ def fixLane(centerX, centerY, video_capture):
 			fn_frame = video_capture.read()
 			orig = imutils.resize(fn_frame, width=400)
 			fn_frame = orig
-			difference = 0
+			
 			imgHSV = cv2.cvtColor(fn_frame,cv2.COLOR_BGR2HSV)
 			foundLane, centerX_LANE, centerY_LANE, width_LANE, height_LANE, rect_angle_LANE = laneCheck(imgHSV)
 			if centerX_LANE <= 230 and centerX_LANE >= 170:
@@ -78,32 +53,68 @@ def fixLane(centerX, centerY, video_capture):
 	return fn_frame
 
 def moveGreen(video_capture):
-	greenFound = False 
-	while greenFound == False:
+	greenFound1 = False 
+	mgLastX = -1
+	while greenFound1 == False:
 		move_py.movement_func(1)
-		time.sleep(0.5)
-		print("nandito")
+		print("Greenfound:", greenFound1)
+		time.sleep(0.13)
+		print("nandito move green")
 		move_py.movement_func(99)
 		frame = video_capture.read()
-		orig = imutils.resize(frame, width=400)
-		frame = orig
-		difference = 0
+		frame = imutils.resize(frame, width=400)
 		frame = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
-		#foundLane, centerX_LANE, centerY_LANE, width_LANE, height_LANE, rect_angle_LANE = laneCheck(frame)
-		#if foundLane:
-		#	frame = fixLane(centerX_LANE, centerY_LANE, video_capture)
+		sawLane, laneCenterX, laneCenterY, laneWidth, laneHeight, laneAngle = laneCheck(frame)
+		while sawLane and (laneCenterX <= 170 or laneCenterX >= 230):
+			mgLastX = laneCenterX
+			frame = video_capture.read()
+			frame = imutils.resize(frame, width=400)
+			frame = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
+			sawLane, laneCenterX, laneCenterY, laneWidth, laneHeight, laneAngle = laneCheck(frame)
+			if(laneCenterX < 170):
+				print("moveGreen naligaw to Left")
+				move_py.movement_func(6)
+				time.sleep(timemoveside)
+				move_py.movement_func(99)
+			elif(laneCenterX > 230):
+				print("moveGreen naligaw to Right")
+				move_py.movement_func(7)
+				time.sleep(timemoveside)
+				move_py.movement_func(99)
+			
+			time.sleep(0.3)
 		
-		#::FOR GREEN (H, S, V)
-		rangeMin = np.array([40, 100, 150], np.uint8)
-		rangeMax = np.array([80, 255, 255], np.uint8)
+		while sawLane == False: 
+			frame = video_capture.read()
+			frame = imutils.resize(frame, width=400)
+			frame = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
+			sawLane, laneCenterX, laneCenterY, laneWidth, laneHeight, laneAngle = laneCheck(frame)
+			
+			if sawLane and (laneCenterX <= 170 or laneCenterX >= 230):
+				sawLane = False
+				mgLastX = laneCenterX
+				
+			if(mgLastX < 170):
+				print("moveGreen naligaw to Left")
+				move_py.movement_func(6)
+				time.sleep(timemoveside)
+				move_py.movement_func(99)
+			elif(mgLastX > 230):
+				print("moveGreen naligaw to Right")
+				move_py.movement_func(7)
+				time.sleep(timemoveside)
+				move_py.movement_func(99)
+			
+			time.sleep(0.3)
+			
 		centerX = -1
 		centerY = -1
 		width = 0
 		height = 0
 		rect_angle = 0
-		imgThresh = cv2.inRange(frame, rangeMin, rangeMax)
+		imageGreen = cv2.inRange(frame, np.array([40, 100, 150], np.uint8), np.array([80, 255, 255], np.uint8))
 		
-		_, contours, hierarchy = cv2.findContours(imgThresh,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+		_, contours, hierarchy = cv2.findContours(imageGreen,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
 		areas = [cv2.contourArea(c) for c in contours]
 		if np.any(areas):
 			foundLane = True
@@ -111,16 +122,22 @@ def moveGreen(video_capture):
 			max_index = np.argmax(areas)
 			cnt=contours[max_index]
 			(centerX, centerY), (width, height), rect_angle = cv2.minAreaRect(cnt)
-			#dimension condition here
-			greenFound = True
-			move_py.movement_func(99)
-		time.sleep(1)
+			print("Saw something")
+			if (width * height) > 3000:
+				print("yuh seen")
+				greenFound1 = True
+				break
+				move_py.movement_func(99)
+		time.sleep(0.3)
+	
+	print("Greenfound:", greenFound1)
 
-def doTurnProcedure(turnDirection, video_capture):
+def doTurnProcedure(turnDirection, video_capture, findGreen = True):
 	print("TURNING: " + str(turnDirection))
-	moveGreen(video_capture)
-	sleeptime = 2;
-	rotatespeed = 0.01
+	if findGreen:
+		moveGreen(video_capture)
+	sleeptime = 0.5;
+	rotatespeed = 0.07
 	if turnDirection < 0:
 		#left
 		dflag = 6
@@ -211,6 +228,54 @@ def doTurnAroundProcedure():
 	#time.sleep(3)
 	return
 
+def redCheck(frame):
+	centerX = -1
+	centerY = -1
+	width = 0
+	height = 0
+	rect_angle = 0
+	
+	imgThreshRed = cv2.inRange(imgHSV, np.array([0, 1, 0], np.uint8), np.array([10, 255, 255], np.uint8))
+	_,contoursRed, hierarchyRed = cv2.findContours(imgThreshRed,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+	areasRed = [cv2.contourArea(c) for c in contoursRed]
+	
+	foundRed = False
+	if np.any(areasRed):
+		max_index = np.argmax(areasRed)
+		cnt=contoursRed[max_index]
+		(centerX_t, centerY_t), (width_t, height_t), rect_angle_t = cv2.minAreaRect(cnt)
+		if (width_t * height_t) > 3000:
+			foundRed = True
+			height = height_t 
+			width = width_t
+			centerY = centerY_t
+			centerX = centerX_t
+			rect_angle = rect_angle_t
+	return (foundRed, centerX, centerY, width, height, rect_angle)
+
+def laneCheck(frame):
+	centerX = -1
+	centerY = -1
+	width = 0
+	height = 0
+	rect_angle = 0
+	imgLane = cv2.inRange(frame, np.array([100, 160, 0], np.uint8), np.array([140, 255, 255], np.uint8))
+	_, contours, hierarchy = cv2.findContours(imgLane,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+	areas = [cv2.contourArea(c) for c in contours]
+	foundLane = False
+	if np.any(areas):
+		allTry = 1
+		max_index = np.argmax(areas)
+		cnt=contours[max_index]
+		(centerX_t, centerY_t), (width_t, height_t), rect_angle_t = cv2.minAreaRect(cnt)
+		if (width_t * height_t) > 3000:
+			foundLane = True
+			height = height_t 
+			width = width_t
+			centerY = centerY_t
+			centerX = centerX_t
+			rect_angle = rect_angle_t
+	return (foundLane, centerX, centerY, width, height, rect_angle)
 
 
 Kernel_size=15
@@ -222,53 +287,6 @@ threshold=15
 theta=np.pi/180
 minLineLength=100
 maxLineGap=1
-
-
-#For black
-Hmin = 0
-Hmax = 180
-Smin = 0
-Smax = 255
-Vmin = 0
-Vmax = 255
-
-#For blue
-Hmin = 100
-Hmax = 140
-Smin = 160
-Smax = 255
-Vmin = 0
-Vmax = 255
-
-
-
-rangeMin = np.array([Hmin, Smin, Vmin], np.uint8)
-rangeMax = np.array([Hmax, Smax, Vmax], np.uint8)
-
-
-#For red
-Hmin = 0
-Hmax = 10
-Smin = 1
-Smax = 255
-Vmin = 0
-Vmax = 255
-
-
-rangeMinRed = np.array([Hmin, Smin, Vmin], np.uint8)
-rangeMaxRed = np.array([Hmax, Smax, Vmax], np.uint8)
-
-#For red
-Hmin = 170
-Hmax = 180
-Smin = 1
-Smax = 255
-Vmin = 0
-Vmax = 255
-
-
-rangeMinRed1 = np.array([Hmin, Smin, Vmin], np.uint8)
-rangeMaxRed1 = np.array([Hmax, Smax, Vmax], np.uint8)
 
 minArea = 50
 angle = 0
@@ -309,7 +327,6 @@ fs = False
 
 #Initialize camera
 
-blank_image = np.zeros((30,100,3), np.uint8)
 agi = 1
 farCenterBuff = 1
 lastTryAngle = 0
@@ -320,236 +337,17 @@ LaneArea = 100
 trying=False
 calibrated=True
 difference = 30
-
-def redCheck(frame):
-	Hmin = 0
-	Hmax = 10
-	Smin = 1
-	Smax = 255
-	Vmin = 0
-	Vmax = 255
-	rangeMinRed = np.array([Hmin, Smin, Vmin], np.uint8)
-	rangeMaxRed = np.array([Hmax, Smax, Vmax], np.uint8)
-	centerX = -1
-	centerY = -1
-	width = 0
-	height = 0
-	rect_angle = 0
-	
-	imgThreshRed = cv2.inRange(imgHSV, rangeMinRed, rangeMaxRed)
-
-	### RED DETECTION
-	_,contoursRed, hierarchyRed = cv2.findContours(imgThreshRed,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
-	areasRed = [cv2.contourArea(c) for c in contoursRed]
-	
-	foundRed = False
-	if np.any(areasRed):
-		foundRed = True
-		max_index = np.argmax(areasRed)
-		cnt=contoursRed[max_index]
-		
-		(centerX, centerY), (width, height), rect_angle = cv2.minAreaRect(cnt)
-	
-	return (foundRed, centerX, centerY, width, height, rect_angle)
-
-def laneCheck(frame):
-	#For blue
-	Hmin = 100
-	Hmax = 140
-	Smin = 160
-	Smax = 255
-	Vmin = 0
-	Vmax = 255
-	rangeMin = np.array([Hmin, Smin, Vmin], np.uint8)
-	rangeMax = np.array([Hmax, Smax, Vmax], np.uint8)
-	centerX = -1
-	centerY = -1
-	width = 0
-	height = 0
-	rect_angle = 0
-	imgThresh = cv2.inRange(frame, rangeMin, rangeMax)
-	imgErode = imgThresh
-	
-	_, contours, hierarchy = cv2.findContours(imgErode,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
-	areas = [cv2.contourArea(c) for c in contours]
-	
-	foundLane = False
-	if np.any(areas):
-		foundLane = True
-		allTry = 1
-		max_index = np.argmax(areas)
-		cnt=contours[max_index]
-		(centerX, centerY), (width, height), rect_angle = cv2.minAreaRect(cnt)
-
-	
-	return (foundLane, centerX, centerY, width, height, rect_angle)
+timefrontleft = 0.07
+timefrontright = 0.07
+#timefrontleft = 0.1
+#timefrontright = 0.1
+timemoveside = 0.07
 
 move_py.movement_func(12345)
-if calibrated == False:
-	frame = video_capture.read()
-	orig = imutils.resize(frame, width=400)
-	frame = orig
-	difference = 0
-	imgHSV = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
-	sawRed, redCenterX, redCenterY, redWidth, redHeight, redAngle = redCheck(imgHSV)
-	t_time = 0;
-	difference = 0
-	if(sawRed == False):
-		print("Warning: no calibration marker found. Exiting")
-		pyDie(video_capture)
-	else:
-		tryvar = 0
-		while difference < 10 and tryvar != 5:
-			checkAutoFile = open("masterOff.txt","r")
-			if(checkAutoFile.read(1)=='0'):
-				move_py.movement_func(99)
-				checkAutoFile.close()
-				pyDie(video_capture)
-				
-			checkAutoFile = open("masterOff.txt","r")
-			if(checkAutoFile.read(1)=='2'):
-				move_py.movement_func(99)
-				checkAutoFile.close()
-				continue
-			
-			checkAutoFile.close()
-				
-			if(move_py.readRoboAutoStop()): 
-				move_py.turnoffALlPins()
-				pyDie(video_capture)
-	
-			move_py.movement_func(1)
-			time.sleep(0.05)
-			move_py.movement_func(99)
-			t_time += 0.05
-			tryvar+=1
-			frame = video_capture.read()
-			orig = imutils.resize(frame, width=400)
-			frame = orig
-			imgHSV = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
-			sawRed2, redCenterX2, redCenterY2, redWidth2, redHeight2, redAngle2 = redCheck(imgHSV)
-			if(sawRed2==False):
-				break
-				
-			print("x1: ", redCenterX, "y1: ", redCenterY)
-			print("x2; ", redCenterX2, "y2: ", redCenterY2)
-			difference = redCenterY2 - redCenterY
-			time.sleep(1)
-			
-		move_py.movement_func(99)
-		if(difference >= 10):
-			print("Time: ", t_time)
-			print("Difference: ", difference)
-			t_fact = 0.1 / t_time
-			difference = difference * t_fact
-			calibrated = True
-			
-			frame = video_capture.read()
-			orig = imutils.resize(frame, width=400)
-			frame = orig
-			imgHSV = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
-			sawRed2, redCenterX2, redCenterY2, redWidth2, redHeight2, redAngle2 = redCheck(imgHSV)
-			
-			while(sawRed2 == True):
-				checkAutoFile = open("masterOff.txt","r")
-				if(checkAutoFile.read(1)=='0'):
-					move_py.movement_func(99)
-					checkAutoFile.close()
-					pyDie(video_capture)
-					
-				checkAutoFile = open("masterOff.txt","r")
-				if(checkAutoFile.read(1)=='2'):
-					move_py.movement_func(99)
-					checkAutoFile.close()
-					continue
-				
-				checkAutoFile.close()
-					
-				if(move_py.readRoboAutoStop()): 
-					move_py.turnoffALlPins()
-					pyDie(video_capture)
-				frame = video_capture.read()
-				orig = imutils.resize(frame, width=400)
-				frame = orig
-				imgHSV = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
-				sawRed2, redCenterX2, redCenterY2, redWidth2, redHeight2, redAngle2 = redCheck(imgHSV)
-				move_py.movement_func(1)
-				time.sleep(0.1) 
-				move_py.movement_func(99)
-				frame = video_capture.read()
-				orig = imutils.resize(frame, width=400)
-				frame = orig
-				imgHSV = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
-				sawLane, laneCenterX, laneCenterY, laneWidth, laneHeight, laneAngle = laneCheck(imgHSV)
-				
-				if(laneCenterX < 170):
-					move_py.movement_func(6)
-					time.sleep(0.1)
-					move_py.movement_func(99)
-				elif(laneCenterX > 230):
-					move_py.movement_func(7)
-					time.sleep(0.1)
-					move_py.movement_func(99)
-				else:
-					move_py.movement_func(1)
-					time.sleep(0.1)
-					move_py.movement_func(99)
-		else:
-			move_py.movement_func(99)
-		
-		frame = video_capture.read()
-		orig = imutils.resize(frame, width=400)
-		frame = orig
-		imgHSV = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
-		sawLane, laneCenterX, laneCenterY, laneWidth, laneHeight, laneAngle = laneCheck(imgHSV)
-		
-		while sawLane==False or (laneCenterX < 170 or laneCenterX > 230):
-			checkAutoFile = open("masterOff.txt","r")
-			if(checkAutoFile.read(1)=='0'):
-				move_py.movement_func(99)
-				checkAutoFile.close()
-				pyDie(video_capture)
-				
-			checkAutoFile = open("masterOff.txt","r")
-			if(checkAutoFile.read(1)=='2'):
-				move_py.movement_func(99)
-				checkAutoFile.close()
-				continue
-			
-			checkAutoFile.close()
-				
-			if(move_py.readRoboAutoStop()): 
-				move_py.turnoffALlPins()
-				move_py.movement_func(99)
-				pyDie(video_capture)
-				
-			frame = video_capture.read()
-			orig = imutils.resize(frame, width=400)
-			frame = orig
-			imgHSV = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
-			sawLane, laneCenterX, laneCenterY, laneWidth, laneHeight, laneAngle = laneCheck(imgHSV)
-			
-			if(laneCenterX < 170):
-				move_py.movement_func(6)
-				time.sleep(0.1)
-				move_py.movement_func(99)
-			elif(laneCenterX > 230):
-				move_py.movement_func(7)
-				time.sleep(0.1)
-				move_py.movement_func(99)
-			else:
-				move_py.movement_func(1)
-				time.sleep(0.1)
-				move_py.movement_func(99)
-		time.sleep(1.5)
-		#calibrated = False
+ccount = 0
 
-while (True and calibrated):
-	timefrontleft = 0.07
-	timefrontright = 0.07
-	#timefrontleft = 0.1
-	#timefrontright = 0.1
-	timemoveside = 0.07
+
+while True:
 	wrongdotmoveforward = 0.1
 	iikotsiyapakaunti = 0.2
 	moveforwardspeed = 0.15
@@ -560,7 +358,6 @@ while (True and calibrated):
 	orig = imutils.resize(frame, width=400)
 	frame = orig
 	imgHSV = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
-	ccount = 0
 	checkAutoFile = open("masterOff.txt","r")
 	if(checkAutoFile.read(1)=='0'):
 		move_py.movement_func(99)
@@ -624,7 +421,6 @@ while (True and calibrated):
 					#move_py.movement_func(1)
 					#time.sleep(0.1*(minRedHeight / (difference)))
 					#move_py.movement_func(99)
-					moveGreen(video_capture)
 					if numberOfStops==0 and goHome:
 						move_py.movement_func(1)
 						time.sleep(0.1)
@@ -758,7 +554,7 @@ while (True and calibrated):
 					# RED DETECTION SIMULTANEOUS CHECK
 					if returning==False:
 						if hasTurned == False:
-							## DIRECTION CHECKER 1
+							#DIRECTION CHECKER 1
 							print ("ME STILL HERE")
 							sawDotForTurn+=1
 							if str(sawDotForTurn) in definedStops:
@@ -778,8 +574,8 @@ while (True and calibrated):
 									print("NALIGAW")
 									doTurnProcedure(1, video_capture)
 									
-								ccount = count(definedStops[str(sawDotForTurn)])
-								print("Count", ccount)
+								ccount = len(definedStops[str(sawDotForTurn)])
+								print("Count:", ccount)
 							else:
 								move_py.movement_func(1)
 								time.sleep(wrongdotmoveforward)
@@ -812,6 +608,7 @@ while (True and calibrated):
 										time.sleep(1)
 										print("hala hindi na false")
 									else:
+										moveGreen(video_capture)
 										time.sleep(5)
 										#move_py.movement_func(6)
 										#time.sleep(0.1 * 3)
@@ -859,10 +656,10 @@ while (True and calibrated):
 				
 				if(laneCenterX < 170):
 					print("DTP: PUmASOK NALIGAW")
-					doTurnProcedure(-1, video_capture)
+					doTurnProcedure(-1, video_capture, False)
 				elif(laneCenterX > 230):
 					print("DTP: PUmASOK NALIGAW")
-					doTurnProcedure(1, video_capture)
+					doTurnProcedure(1, video_capture, False)
 				else:
 					move_py.movement_func(4)
 					time.sleep(0.1)
