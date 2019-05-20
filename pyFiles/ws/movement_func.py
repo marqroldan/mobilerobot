@@ -11,17 +11,17 @@ wiringpi.pinMode(3,1)
 
 wiringpi.pinMode(4,1) #output
 wiringpi.pinMode(5,0) #input
-roboStop_s = False
+masterOff_s = False
 
-file2 = open("roboStop.txt","w")
-file2.write("false")
-	
-file2 = open("masterFile.txt","w")
-file2.write("false")
+#0 = STOP | 1 = GO | 2 = PAUSE
+autoFile = open("masterOff.txt","w")
+
+file2 = open("masterOff.txt","w")
+file2.write(" ")
 
 def movDie():
-	file2 = open("roboStop.txt","w")
-	file2.write("false")
+	file2 = open("masterOff.txt","w")
+	file2.write(" ")
 #	sys.exit()
 	return
 	
@@ -35,50 +35,50 @@ def turnOffPins():
 
 def moveForward():
 	turnOffPins()
-	if(readRoboStop()==False):
+	if(readmasterOff()==False):
 		print("WPI: Moving Forward")
 		wiringpi.digitalWrite(0, 1)
-		readRoboStop()
+		readmasterOff()
 		wiringpi.digitalWrite(2, 1)
-		readRoboStop()
+		readmasterOff()
 	return
 
 def moveBackward():
 	turnOffPins()
-	if(readRoboStop()==False):
+	if(readmasterOff()==False):
 		print("WPI: Moving Backward")
 		wiringpi.digitalWrite(1, 1)
-		readRoboStop()
+		readmasterOff()
 		wiringpi.digitalWrite(3, 1)
-		readRoboStop()
+		readmasterOff()
 	return
 
 def rotateRight():
 	turnOffPins()
-	if(readRoboStop()==False):
+	if(readmasterOff()==False):
 		print("WPI: Rotating Right")
 		wiringpi.digitalWrite(0, 1)
-		readRoboStop()
+		readmasterOff()
 		wiringpi.digitalWrite(3, 1)
-		readRoboStop()
+		readmasterOff()
 	return
 
 def rotateLeft():
 	turnOffPins()
-	if(readRoboStop()==False):
+	if(readmasterOff()==False):
 		print("WPI: Rotating Left")
 		wiringpi.digitalWrite(1, 1)
-		readRoboStop()
+		readmasterOff()
 		wiringpi.digitalWrite(2, 1)
-		readRoboStop()
+		readmasterOff()
 	return
 	
-def readRoboStop():
-	file = open("roboStop.txt","r")
+def readmasterOff():
+	file = open("masterOff.txt","r")
 	line = list(file.readlines())
 	line=line[0].splitlines()[0]
-	if(line=="true"):
-		print("yeah")
+	if(line=="0"):
+		print("Master says to turn off.")
 		turnOffPins()
 		movDie()
 		return True
@@ -86,7 +86,7 @@ def readRoboStop():
 		return False
 	
 def readRoboAutoStop():
-	file = open("roboStop.txt","r")
+	file = open("masterOff.txt","r")
 	line = list(file.readlines())
 	line=line[0].splitlines()[0]
 	if(line=="true"):
