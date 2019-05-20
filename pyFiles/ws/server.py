@@ -52,7 +52,6 @@ class WSHandler(tornado.websocket.WebSocketHandler):
   def stopAuto(self):
     autoFile = open('/home/pi/masterOff.txt','w')
     autoFile.write('0')
-    time.sleep(2)
     autoFile.close()
  
   def on_message(self, message):
@@ -63,6 +62,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
     print '[WS] Incoming message:', message
     if message == "go_forward":
       self.stopAuto()
+      move_py.movement_func(12345)
       move_py.movement_func(1)
       last_message="I'm forwarding"
       #self.write_message("I'm forwarding")
@@ -73,16 +73,19 @@ class WSHandler(tornado.websocket.WebSocketHandler):
       #self.write_message("Stopping.")
     if message == "go_reverse":
       self.stopAuto()
+      move_py.movement_func(12345)
       move_py.movement_func(4)
       last_message="Reversing"
       #self.write_message("Reversing")
     if message == "go_right":
       self.stopAuto()
+      move_py.movement_func(12345)
       move_py.movement_func(3)
       last_message="Turning right"
       #self.write_message("Turning right")
     if message == "go_left":
       self.stopAuto()
+      move_py.movement_func(12345)
       move_py.movement_func(2)
       last_message="Turning left"
       #self.write_message("Turning left")

@@ -93,6 +93,7 @@ def laneCheck(frame):
 	return (foundLane, centerX, centerY, width, height, rect_angle)
 
 def fixLane(centerX, centerY, video_capture):
+	fn_frame = video_capture.read()
 	if centerX <= 170 or centerX >= 230:
 		#Stop All Movement
 		move_py.movement_func(99)
@@ -106,18 +107,17 @@ def fixLane(centerX, centerY, video_capture):
 				#move to right
 				move_py.movement_func(6)
 				
-			frame = video_capture.read()
-			orig = imutils.resize(frame, width=400)
-			frame = orig
+			fn_frame = video_capture.read()
+			orig = imutils.resize(fn_frame, width=400)
+			fn_frame = orig
 			difference = 0
-			imgHSV = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
+			imgHSV = cv2.cvtColor(fn_frame,cv2.COLOR_BGR2HSV)
 			foundLane, centerX_LANE, centerY_LANE, width_LANE, height_LANE, rect_angle_LANE = laneCheck(imgHSV)
 			if centerX_LANE <= 230 and centerX_LANE >= 170:
 				#turn Off Movement
 				move_py.movement_func(99)
 				outOfLane = False
-				
-	return frame
+	return fn_frame
 
 def moveForwardFindGreen(video_capture):
 	greenFound = False 
@@ -158,14 +158,14 @@ def moveForwardFindGreen(video_capture):
 
 def turnBasedOnDirection(video_capture, direction, green = False):
 	if green == True:
-		frame, foundLane = moveForwardFindGreen(video_capture)
+		fn_frame, foundLane = moveForwardFindGreen(video_capture)
 	else:
-		frame = video_capture.read()
-		orig = imutils.resize(frame, width=400)
-		frame = orig
+		fn_frame = video_capture.read()
+		orig = imutils.resize(fn_frame, width=400)
+		fn_frame = orig
 		difference = 0
-		frame = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
-		foundLane, centerX_LANE, centerY_LANE, width_LANE, height_LANE, rect_angle_LANE = laneCheck(frame)
+		fn_frame = cv2.cvtColor(fn_frame,cv2.COLOR_BGR2HSV)
+		foundLane, centerX_LANE, centerY_LANE, width_LANE, height_LANE, rect_angle_LANE = laneCheck(fn_frame)
 	
 	flip = False
 	while foundLane == True:
@@ -173,19 +173,19 @@ def turnBasedOnDirection(video_capture, direction, green = False):
 			move_py.movement_func(6)
 		else:
 			move_py.movement_func(7)
-		frame = video_capture.read()
-		orig = imutils.resize(frame, width=400)
-		frame = orig
+		fn_frame = video_capture.read()
+		orig = imutils.resize(fn_frame, width=400)
+		fn_frame = orig
 		difference = 0
-		frame = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
-		foundLane, centerX_LANE, centerY_LANE, width_LANE, height_LANE, rect_angle_LANE = laneCheck(frame)
+		fn_frame = cv2.cvtColor(fn_frame,cv2.COLOR_BGR2HSV)
+		foundLane, centerX_LANE, centerY_LANE, width_LANE, height_LANE, rect_angle_LANE = laneCheck(fn_frame)
 		if foundLane == False:
 			flip = True
 			foundLane = True
 		elif foundLane == True and flip == True:
 			break
 			
-	return frame
+	return fn_frame
 
 def checkDot(video_capture, centerX_LANE, centerX_RED):
 	#frame, inLane, currentRow, currentDot, numberOfStopsForRow, returning, foundRed 
@@ -297,6 +297,7 @@ while True:
 	imgHSV = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
 	
 	foundLane, centerX_LANE, centerY_LANE, width_LANE, height_LANE, rect_angle_LANE = laneCheck(imgHSV)
+	foundRed, centerX_RED, centerY_RED, width_RED, height_RED, rect_angle_RED = redCheck(imgHSV)
 	
 	if foundLane:
 		frame = fixLane(centerX_LANE, centerY_LANE, video_capture)
@@ -307,4 +308,3 @@ while True:
 		move_py.movement_func(99)
 		pyDie(video_capture)
 		
-	

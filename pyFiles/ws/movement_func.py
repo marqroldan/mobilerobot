@@ -23,7 +23,7 @@ def movDie():
 	file2 = open("masterOff.txt","w")
 	file2.write("0")
 	file2.close()
-#	sys.exit()
+	sys.exit()
 	return
 	
 def turnOffPins():
