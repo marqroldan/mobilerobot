@@ -1,0 +1,166 @@
+
+body {
+	margin: 0;
+	padding: 0;
+	background-image: url('bg.png');
+	background-repeat: no-repeat;
+	background-size: cover;
+}
+
+.nomargin {
+	margin: 0 !important;
+}
+
+.noshow {
+	display: none;
+}
+
+.wrapper {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	flex-direction: column;
+	margin: auto;
+	padding: 20px;
+	background: #fff;
+	border: 1px solid rgba(0,0,0,0.5);
+	border-radius: 5px;
+	transform: translateX(-50%) translateY(-50%);
+}
+
+.wrapper2 {
+	transform: none;
+	position: relative;
+	top: auto;
+	left: auto;
+	margin:10px;
+	flex-direction: auto;
+}
+
+.show_wrapper {
+	flex-direction: column;
+	margin: 30px;
+	padding: 20px;
+	background: #fff;
+	border: 1px solid rgba(0,0,0,0.5);
+	border-radius: 5px;
+}
+
+.edit_field,.add_field {
+	display: none;
+}
+
+.btn {
+	display: inline-block !important;
+}
+
+table.dataTable thead th:nth-child(6),
+table.dataTable tbody td:nth-child(6) {
+  width: 200px;
+  max-width: 200px;
+  min-width: 200px;
+}  
+
+.btn_sort {
+	display: inline-block !important;
+}
+table .btn {
+	margin: 0 5px !important;
+}
+
+table {
+	width: 100% !important;
+}
+
+table .table-dark a {
+	color: #fff;
+	text-decoration: underline;
+}
+
+table a {
+	color: #fff;
+}
+
+
+.addBtn {
+	width: 150px !important;
+	display: inline-block;
+}
+
+.inputNick {
+	display: inline-block;
+}
+
+.total_bg {
+	color: #fff;
+	background: #82a65c;
+	border-color: #82a65c;
+}
+
+.work_title {
+	text-align: center;
+	background: #628938;
+	font-size: 16px;
+	padding: 0;
+	color: white;
+	letter-spacing: 1px;
+	font-weight: bold;
+}
+
+td.spacer {
+	background: #fff !important;
+}
+
+th.rotate {
+  /* Something you can count on */
+  height: 210px;
+  white-space: nowrap;
+}
+
+/** rotate
+
+
+  transform: 
+    /* Magic Numbers 
+    translate(0px, -9px)
+    /* 45 is really 360 - 45 
+  width: 100px;
+  margin-left: -22px;
+  margin-right: -999px;
+**/
+
+th.rotate > div {
+  transform: 
+    translate(0px, -9px)
+	rotate(270deg);
+  width: 100px;
+	text-align: center;
+	width: 50px;
+   word-wrap: break-word;      /* IE */
+}
+th.rotate > div > span {
+  padding: 5px 10px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.readonly {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;  
+}
+
+._PDF {
+	background-color: blue;
+	padding: 10px;
+	border-radius: 3px;
+	font-weight: bold;
+	color: #fff;
+}
+
+._PAPER {
+	background-color: green;
+	padding: 10px;
+	border-radius: 3px;
+}

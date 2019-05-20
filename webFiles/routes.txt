@@ -1,0 +1,1 @@
+[{"data-row":"1","data-seat":"1","data-instructor":"Hello"},{"data-row":"1","data-seat":"2","data-instructor":"Hello 2"},{"data-row":"2","data-seat":"1","data-instructor":"Yo"},{"data-row":"2","data-seat":"2","data-instructor":"Yo2"}]
