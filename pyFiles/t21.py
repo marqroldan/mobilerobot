@@ -13,17 +13,9 @@ import argparse
 import imutils
 
 def initialize_robo():
-	#Stop Movement
-	move_py.movement_func(99)
 	#Kill any instance of the application
 	#0 = STOP | 1 = GO | 2 = PAUSE
-	autoFile = open("masterOff.txt","w")
-	autoFile.write('0')
-	autoFile.close()
-	time.sleep(2)
-	autoFile = open("masterOff.txt","w")
-	autoFile.write('1')
-	autoFile.close()
+	move_py.movement_func(12345)
 
 
 def pyDie(video_capture):
@@ -101,7 +93,7 @@ def laneCheck(frame):
 	return (foundLane, centerX, centerY, width, height, rect_angle)
 
 def fixLane(centerX, centerY, video_capture):
-	if centerX <= 170 or centerX >= 230):
+	if centerX <= 170 or centerX >= 230:
 		#Stop All Movement
 		move_py.movement_func(99)
 		outOfLane = True

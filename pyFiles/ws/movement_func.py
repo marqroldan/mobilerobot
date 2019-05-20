@@ -15,13 +15,14 @@ masterOff_s = False
 
 #0 = STOP | 1 = GO | 2 = PAUSE
 autoFile = open("masterOff.txt","w")
-
 file2 = open("masterOff.txt","w")
-file2.write(" ")
+file2.write("0")
+file2.close()
 
 def movDie():
 	file2 = open("masterOff.txt","w")
-	file2.write(" ")
+	file2.write("0")
+	file2.close()
 #	sys.exit()
 	return
 	
@@ -116,52 +117,70 @@ def AutoPinStop():
 def movement_func(arg1):
 	moveforwardtime = 0.8
 	moveside = 0.4
-	readRoboAutoStop()
-	
 	arg1 = int(arg1)
-	if arg1==1:
-		#forward
-		moveForward()
-	elif arg1==2:
-		#left
-		#moveForward()
-		#time.sleep(moveforwardtime)
-		rotateLeft()
-		time.sleep(moveside)
-		turnOffPins()
-	elif arg1==3:
-		#right
-		rotateRight()
-		time.sleep(moveside)
-		turnOffPins()
-	elif arg1==4:
-		#reverse
-		moveBackward()
-	elif arg1==5:
-		#stop
-		turnOffPins()
-	elif arg1==6:
-		#rotateLeft
-		rotateLeft()
-	elif arg1==7:
-		#rotateRight
-		rotateRight()
-	elif arg1==8:
-		#360CounterClockwise
-		print("WPI: 360: CounterClockwise")
-		rotateLeft()
-		time.sleep(0.8)
-		turnOffPins()
-	elif arg1==9:
-		#360Clockwise
-		print("WPI: 360: Clockwise")
-		moveForward()
-		time.sleep(0.6)
-		rotateRight()
-		time.sleep(1.2)
-		turnOffPins()
+	if arg1==12345:
+		autoFile = open("masterOff.txt","w")
+		autoFile.write('0')
+		autoFile.close()
+		time.sleep(2)
+		autoFile = open("masterOff.txt","w")
+		autoFile.write('1')
+		autoFile.close()
+		
 	else:
-		turnOffPins()
+		readRoboAutoStop()
+		
+		if arg1==1:
+			#forward
+			moveForward()
+		elif arg1==2:
+			#left
+			#moveForward()
+			#time.sleep(moveforwardtime)
+			rotateLeft()
+			time.sleep(moveside)
+			turnOffPins()
+		elif arg1==3:
+			#right
+			rotateRight()
+			time.sleep(moveside)
+			turnOffPins()
+		elif arg1==4:
+			#reverse
+			moveBackward()
+		elif arg1==5:
+			#stop
+			turnOffPins()
+		elif arg1==6:
+			#rotateLeft
+			rotateLeft()
+		elif arg1==7:
+			#rotateRight
+			rotateRight()
+		elif arg1==8:
+			#360CounterClockwise
+			print("WPI: 360: CounterClockwise")
+			rotateLeft()
+			time.sleep(0.8)
+			turnOffPins()
+		elif arg1==9:
+			#360Clockwise
+			print("WPI: 360: Clockwise")
+			moveForward()
+			time.sleep(0.6)
+			rotateRight()
+			time.sleep(1.2)
+			turnOffPins()
+		elif arg1==12345:
+			autoFile = open("masterOff.txt","w")
+			autoFile.write('0')
+			autoFile.close()
+			time.sleep(2)
+			autoFile = open("masterOff.txt","w")
+			autoFile.write('1')
+			autoFile.close()
+		else:
+			turnOffPins()
 		
 	return
 
