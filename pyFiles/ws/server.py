@@ -50,8 +50,9 @@ class WSHandler(tornado.websocket.WebSocketHandler):
     self.write_message(last_message)
 	
   def stopAuto(self):
-    autoFile = open('/home/pi/autoStart.txt','w')
+    autoFile = open('/home/pi/masterOff.txt','w')
     autoFile.write('0')
+	time.sleep(2)
     autoFile.close()
  
   def on_message(self, message):
@@ -88,27 +89,27 @@ class WSHandler(tornado.websocket.WebSocketHandler):
     if message == "stop_auto":
       last_message = 'Trying to stop automatic operation.'
       self.stopAuto()
-      autoFile = open('/home/pi/autoStart.txt','r')
+      autoFile = open('/home/pi/masterOff.txt','r')
       if(autoFile.read(1)=='0'):
         autoFile.close()
         last_message = 'Automatic operation stopped.'
       
       autoFile.close()
     if message == "pause_auto":
-      autoFile = open('/home/pi/autoStart.txt','w')
+      autoFile = open('/home/pi/masterOff.txt','w')
       autoFile.write('2')
       autoFile.close()
-      autoFile = open('/home/pi/autoStart.txt','r')
+      autoFile = open('/home/pi/masterOff.txt','r')
       if(autoFile.read(1)=='2'):
         autoFile.close()
         last_message = 'Automatic operation paused.'
       
       autoFile.close()
     if message == "play_auto":
-      autoFile = open('/home/pi/autoStart.txt','w')
+      autoFile = open('/home/pi/masterOff.txt','w')
       autoFile.write('1')
       autoFile.close()
-      autoFile = open('/home/pi/autoStart.txt','r')
+      autoFile = open('/home/pi/masterOff.txt','r')
       if(autoFile.read(1)=='1'):
         autoFile.close()
         last_message = 'Automatic operation started.'
@@ -118,7 +119,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
       last_message = 'Attempting to start automatic process.'
       self.stopAuto()
       time.sleep(1)
-      autoFile = open('/home/pi/autoStart.txt','r')
+      autoFile = open('/home/pi/masterOff.txt','r')
       if(autoFile.read(1)=='0'):
         autoFile.close()
       #move_py.movement_func(2)
