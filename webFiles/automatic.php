@@ -110,7 +110,7 @@ else {
 					success:function(response) {
 						console.log(response);
 					  try {
-						// ws.send("go_auto,xyx,"+response);
+						 ws.send("go_auto,xyx,"+response);
 					  }
 					  catch(err) {
 						console.log(err);

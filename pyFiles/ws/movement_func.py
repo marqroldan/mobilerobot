@@ -166,10 +166,8 @@ def movement_func(arg1):
 		elif arg1==9:
 			#360Clockwise
 			print("WPI: 360: Clockwise")
-			moveForward()
-			time.sleep(0.6)
 			rotateRight()
-			time.sleep(1.2)
+			time.sleep(0.8)
 			turnOffPins()
 		elif arg1==10:
 			#rightWheelOn

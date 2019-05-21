@@ -21,12 +21,13 @@ def pyDie(video_capture):
 def delayRightWheel():
 	move_py.movement_func(99)
 	move_py.movement_func(10)
+	#time.sleep(0.01)
 	time.sleep(0.03)
 	move_py.movement_func(99)
 
 def lineFix1(video_capture, lastX = -1):
 	#Function kapag may nakikita pang blue pero wala sa gitna
-	sleepTime = 0.3
+	sleepTime = 0.2
 	frame = video_capture.read()
 	frame = imutils.resize(frame, width=400)
 	frame = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
@@ -37,13 +38,12 @@ def lineFix1(video_capture, lastX = -1):
 		frame = imutils.resize(frame, width=400)
 		frame = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
 		sawLane, laneCenterX, laneCenterY, laneWidth, laneHeight, laneAngle = laneCheck(frame)
+		print("Trying to fix line (1)")
 		if(laneCenterX < leftLimit):
-			print("moveGreen naligaw to Left")
 			move_py.movement_func(6)
 			time.sleep(timemoveside)
 			delayRightWheel()
 		elif(laneCenterX > rightLimit):
-			print("moveGreen naligaw to Right")
 			move_py.movement_func(7)
 			time.sleep(timemoveside)
 			move_py.movement_func(99)
@@ -53,8 +53,9 @@ def lineFix1(video_capture, lastX = -1):
 
 def lineFix2(video_capture, sawLane, lastX = -1):
 	#Function kapag walang nakikita na blue
-	sleepTime = 0.3
+	sleepTime = 0.2
 	while sawLane == False: 
+		print("Trying to fix line (2)")
 		frame = video_capture.read()
 		frame = imutils.resize(frame, width=400)
 		frame = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
@@ -80,7 +81,7 @@ def lineFix2(video_capture, sawLane, lastX = -1):
 
 def moveGreen(video_capture):
 	greenFound1 = False 
-	sleepTime = 0.3
+	sleepTime = 0.2
 	mgLastX = -1
 	while greenFound1 == False:
 		move_py.movement_func(1)
@@ -156,20 +157,22 @@ def doTurnProcedure(turnDirection, video_capture, findGreen = True):
 		dflag = 7
 		
 	move_py.movement_func(dflag)
-	time.sleep(0.15)
-	move_py.movement_func(99)
-	frame = video_capture.read()
-	orig = imutils.resize(frame, width=400)
-	frame = orig
-	imgHSV = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
-	sawLane, laneCenterX, laneCenterY, laneWidth, laneHeight, laneAngle = laneCheck(imgHSV)
+	time.sleep(0.3)
+	if dflag==6:
+		delayRightWheel()
+	else:
+		move_py.movement_func(99)
+	frame_2 = video_capture.read()
+	frame_2 = imutils.resize(frame_2, width=400)
+	imgHSV2 = cv2.cvtColor(frame_2,cv2.COLOR_BGR2HSV)
+	sawLane23, laneCenterX, laneCenterY, laneWidth, laneHeight, laneAngle = laneCheck(imgHSV2)
 	
 	if turnDirection < 0:
 		lgCheck = laneCenterX < 200
 	else:
 		lgCheck = laneCenterX > 200
 		
-	while(sawLane and lgCheck):
+	while(sawLane23 and lgCheck):
 		checkAutoFile = open("masterOff.txt","r")
 		if(checkAutoFile.read(1)=='0'):
 			move_py.movement_func(99)
@@ -190,12 +193,15 @@ def doTurnProcedure(turnDirection, video_capture, findGreen = True):
 		print('second pass')
 		move_py.movement_func(dflag)
 		time.sleep(rotatespeed)
-		move_py.movement_func(99)
-		frame = video_capture.read()
-		orig = imutils.resize(frame, width=400)
-		frame = orig
-		imgHSV = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
-		sawLane, laneCenterX, laneCenterY, laneWidth, laneHeight, laneAngle = laneCheck(imgHSV)
+		if dflag==6:
+			delayRightWheel()
+		else:
+			move_py.movement_func(99)
+			
+		frame_2 = video_capture.read()
+		frame_2 = imutils.resize(frame_2, width=400)
+		imgHSV2 = cv2.cvtColor(frame_2,cv2.COLOR_BGR2HSV)
+		sawLane23, laneCenterX, laneCenterY, laneWidth, laneHeight, laneAngle = laneCheck(imgHSV2)
 		if turnDirection < 0:
 			lgCheck = laneCenterX < 200
 		else:
@@ -206,15 +212,17 @@ def doTurnProcedure(turnDirection, video_capture, findGreen = True):
 		print('third pass')
 		move_py.movement_func(dflag)
 		time.sleep(rotatespeed)
-		move_py.movement_func(99)
-		frame = video_capture.read()
-		orig = imutils.resize(frame, width=400)
-		frame = orig
-		imgHSV = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
-		sawLane, laneCenterX, laneCenterY, laneWidth, laneHeight, laneAngle = laneCheck(imgHSV)
+		if dflag==6:
+			delayRightWheel()
+		else:
+			move_py.movement_func(99)
+		frame_2 = video_capture.read()
+		frame_2 = imutils.resize(frame_2, width=400)
+		imgHSV2 = cv2.cvtColor(frame_2,cv2.COLOR_BGR2HSV)
+		sawLane23, laneCenterX, laneCenterY, laneWidth, laneHeight, laneAngle = laneCheck(imgHSV2)
 		lgCheck = laneCenterX < leftLimit or laneCenterX > rightLimit
 		time.sleep(sleeptime)
-		print("sawLane: ", sawLane, "lgCheck: ", lgCheck, "laneCenter: ", laneCenterX)
+		print("sawLane: ", sawLane23, "lgCheck: ", lgCheck, "laneCenter: ", laneCenterX)
 		#cv2.imshow("line detect test1", frame)
 		
 		
@@ -231,12 +239,12 @@ def doStopProcedure():
 	return
 
 
-def doTurnAroundProcedure(video_capture):
+def doTurnAroundProcedure(video_capture, rotate = 8):
 	print("ROBOT TURNING AROUND")
 	move_py.movement_func(1)
 	time.sleep(0.15)
 	delayRightWheel()
-	move_py.movement_func(8)
+	move_py.movement_func(rotate)
 	doTurnProcedure(turnDirection, video_capture, False)
 	#time.sleep(3)
 	return
@@ -352,20 +360,31 @@ LaneArea = 100
 trying=False
 calibrated=True
 difference = 30
-timefrontleft = 0.07
-timefrontright = 0.07
 #timefrontleft = 0.1
 #timefrontright = 0.1
-timemoveside = 0.07
-moveforwardspeed = 0.13
 wrongdotmoveforward = 0.1
 iikotsiyapakaunti = 0.2
 firstikotpakaliwa = 0.73
 
+if True:
+	############ 9-10 volts
+	timefrontleft = 0.07
+	timefrontright = 0.07
+	timemoveside = 0.07
+	moveforwardspeed = 0.13
+else:
+	############ 11volts
+	timefrontleft = 0.02
+	timefrontright = 0.02
+	timemoveside = 0.02
+	moveforwardspeed = 0.08
+
+currentRow = 0
+
 move_py.movement_func(12345)
 ccount = 0
 
-
+bLastX = -1
 while True:
 	angle = 0
 	minRedHeight = 80
@@ -416,27 +435,50 @@ while True:
 	#_,contoursRed, hierarchyRed = cv2.findContours(imgThreshRed,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
 	#areasRed = [cv2.contourArea(c) for c in contoursRed]
 	
-	redBuff+=1
+	#redBuff+=1
 	
 	sawRed, redCenterX, redCenterY, redWidth, redHeight, redAngle = redCheck(imgHSV)
 	
 	if (sawRed): #if np.any(areasRed):
 		#time.sleep(99)
-		if redWidth > 60 and redCenterY > 90:
+		print("May nakitang red")
+		if (redWidth * redHeight) > 3000:
 			#may nakita siyang dot
-			if redBuff > 100:
+			if True:
 				#check kung nasa gitna ba ng screen yung red
 				if(False):#redCenterY < 130):
 					print("May nakitang red kaso malayo sa vertical center")
 					mayNakitangRed = False
 				else:
-					redBuff = 1
+					#redBuff = 1
 					mayNakitangRed = True
 					print("Nakakita nanaman ako within spec")
 					#move_py.movement_func(1)
 					#time.sleep(0.1*(minRedHeight / (difference)))
 					#move_py.movement_func(99)
 					if numberOfStops==0 and goHome:
+						currentRow-=1
+						print("current row: ", currentRow)
+						print("current direction: ", turnDirection)
+						if currentRow > 0 and hasTurned == True:
+							doTurnProcedure(turnDirection * -1, video_capture)
+							hasTurned = False
+							print("Lumabas na siya ng row")
+						elif currentRow > 0 and hasTurned == False:
+							#do nothing
+							#moveGreen(video_capture)
+							mayNakitangRed = False
+							pass 
+						elif currentRow < 1 and hasTurned == False:
+							print("Malapit na ako mag stop")
+							moveGreen(video_capture)
+							nTurn = turnDirection * -1
+							if (nTurn < 0):
+								rtate = 8
+							else:
+								rtate = 9
+							doTurnAroundProcedure(video_capture, 9)
+							pyDie(video_capture)
 						#move_py.movement_func(1)
 						#time.sleep(0.1)
 						#delayRightWheel()
@@ -456,7 +498,6 @@ while True:
 						#	move_py.movement_func(1)
 						#	time.sleep(moveforwardspeed)
 						#	delayRightWheel()
-						pyDie(video_capture)
 			else:
 				#print("Kulang pa sa buff")
 				mayNakitangRed = False
@@ -478,6 +519,7 @@ while True:
 		#sawLane = False
 	
 	if sawLane: #np.any(areas):
+		bLastX = laneCenterX
 		allTry = 1
 		if (False):
 			print("NO LANE FOUND. WIDTH > HEIGHT")
@@ -508,61 +550,65 @@ while True:
 				#print("farCenter:"+str(farCenterBuff))
 				#IF LANE IS OUT OF BOUNDS
 				#print("line centroid: "+str(laneCenterX))
-				if (laneCenterX <= rightLimit and laneCenterX >= leftLimit)==False and farCenterBuff > 15:
-					print("out of bounds na siya")
-					farCenterBuff = 1
-					fs = False
-					#if (laneCenterX - 320) > 0:
-					if(laneCenterY < 130):
-						move_py.movement_func(1)
-						time.sleep(timemoveside)
-						delayRightWheel()
-					elif(laneCenterY > leftLimit):
-						move_py.movement_func(4)
-						time.sleep(timemoveside)
-						move_py.movement_func(99)
+				bLastX, sawLane = lineFix1(video_capture, bLastX)
+				bLastX, sawLane = lineFix2(video_capture, sawLane, bLastX)
+				fs = True
+				if False:
+					if (laneCenterX <= rightLimit and laneCenterX >= leftLimit)==False and farCenterBuff > 15:
+						print("out of bounds na siya")
+						farCenterBuff = 1
+						fs = False
+						#if (laneCenterX - 320) > 0:
+						if(laneCenterY < 130):
+							move_py.movement_func(1)
+							time.sleep(timemoveside)
+							delayRightWheel()
+						elif(laneCenterY > leftLimit):
+							move_py.movement_func(4)
+							time.sleep(timemoveside)
+							move_py.movement_func(99)
+						else:
+							move_py.movement_func(1)
+							time.sleep(timemoveside)
+							delayRightWheel()
+							
+						if laneCenterX < leftLimit:
+							m=1
+							lastLineDirection = 1 
+							print("nasa pinaka kaliwa")
+							move_py.movement_func(6)
+							time.sleep(timefrontright)
+							delayRightWheel()
+							#time.sleep(0.5)
+						elif laneCenterX > rightLimit:
+							m=1
+							lastLineDirection = -1 
+							print("nasa pinaka kanan")
+							move_py.movement_func(7)
+							time.sleep(timefrontleft)
+							move_py.movement_func(99)
+							#time.sleep(0.5)
 					else:
-						move_py.movement_func(1)
-						time.sleep(timemoveside)
-						delayRightWheel()
-						
-					if laneCenterX < leftLimit:
-						m=1
-						lastLineDirection = 1 
-						print("nasa pinaka kaliwa")
-						move_py.movement_func(6)
-						time.sleep(timefrontright)
-						delayRightWheel()
-						#time.sleep(0.5)
-					elif laneCenterX > rightLimit:
-						m=1
-						lastLineDirection = -1 
-						print("nasa pinaka kanan")
-						move_py.movement_func(7)
-						time.sleep(timefrontleft)
-						move_py.movement_func(99)
-						#time.sleep(0.5)
-				else:
-					#farCenterBuff = 1
-					#print("wala sa limit")
-					#if laneCenterX < 150:
-					#	m=1
-					#	lastLineDirection = 1 
-					#	print("more than 280")
-					#	move_py.movement_func(6)
-					#	time.sleep(timefrontright)
-					#	move_py.movement_func(99)
-					#
-					#elif laneCenterX < 250:
-					#	m=1
-					#	lastLineDirection = -1 
-					#	print("less than 120")
-					#	move_py.movement_func(7)
-					#	time.sleep(timefrontleft)
-					#	move_py.movement_func(99)
-					fs = True
-					##move_py.movement_func(1) #goforward
-					pass
+						#farCenterBuff = 1
+						#print("wala sa limit")
+						#if laneCenterX < 150:
+						#	m=1
+						#	lastLineDirection = 1 
+						#	print("more than 280")
+						#	move_py.movement_func(6)
+						#	time.sleep(timefrontright)
+						#	move_py.movement_func(99)
+						#
+						#elif laneCenterX < 250:
+						#	m=1
+						#	lastLineDirection = -1 
+						#	print("less than 120")
+						#	move_py.movement_func(7)
+						#	time.sleep(timefrontleft)
+						#	move_py.movement_func(99)
+						fs = True
+						##move_py.movement_func(1) #goforward
+						pass
 				
 				if mayNakitangRed == True:
 					mayNakitangRed = False
@@ -575,6 +621,8 @@ while True:
 							if str(sawDotForTurn) in definedStops:
 								hasTurned = True
 								print("Yes, papasok siya sa row na to")
+								currentRow = sawDotForTurn
+								print("Current row (pumasok): ", currentRow)
 								sawDotForStop = 0 #reset every row
 								if redCenterX < laneCenterX:
 									print("Turn Left:"+str(redCenterX))
@@ -796,16 +844,17 @@ while True:
 				continue
 		else:
 			if fs == True:
-				if agi > 15:
-					move_py.movement_func(1)
-					time.sleep(moveforwardspeed)
-					delayRightWheel()
-					agi = 1
+				print("Dito nag mmoveforward")
+				move_py.movement_func(1)
+				time.sleep(moveforwardspeed)
+				delayRightWheel()
+				time.sleep(0.2)
 	else:
 		print("Dito ata pumasok")
 		move_py.movement_func(1)
 		time.sleep(moveforwardspeed)
 		delayRightWheel()
+		time.sleep(0.2)
 		
 	agi +=1
 	
