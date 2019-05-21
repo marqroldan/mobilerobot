@@ -126,10 +126,10 @@ while True:
 	frame = video_capture.read()
 	orig = imutils.resize(frame, width=400)
 	frame = orig
-	frame =  cv2.rectangle(frame, (0,0), (170, 300),(0,0,0), -1)
-	frame =  cv2.rectangle(frame, (230,0), (400, 300),(0,0,0), -1)
+	#frame =  cv2.rectangle(frame, (0,0), (170, 300),(0,0,0), -1)
+	#frame =  cv2.rectangle(frame, (230,0), (400, 300),(0,0,0), -1)
 	imgHSV = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)	
-	imgThreshRed = cv2.inRange(frame, np.array([100, 160, 0], np.uint8), np.array([140, 255, 255], np.uint8))
+	imgThreshRed = cv2.inRange(imgHSV, np.array([100, 160, 0], np.uint8), np.array([140, 255, 255], np.uint8))
 	
 	### START LANE DETECTION
 	_, contours, hierarchy = cv2.findContours(imgThreshRed,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
@@ -145,9 +145,9 @@ while True:
 		width = brx
 		height = bry
 		#print("arx: ", arx, " | ary : ", ary)
-		#print("width: ", width, " | height : ", height)
+		print("width: ", width, " | height : ", height)
 		
-		print("width1: ", (brx))
+		#print("width1: ", (brx))
 		
 		if (False):
 			print("NO LANE FOUND. WIDTH > HEIGHT")
@@ -158,8 +158,8 @@ while True:
 			print("x: ", bax, " | y : ", bay)
 			print("width: ", w, " | height : ", h)
 			
-	#		cv2.rectangle(frame, (int(arx), int(ary)), (int(arx+width), int(ary+height)), (0, 255, 0), 2)
-	#		cv2.drawContours(frame, [cnt], -1, (0,255,0), 2)
+			cv2.rectangle(frame, (int(arx), int(ary)), (int(arx+width), int(ary+height)), (0, 255, 0), 2)
+			cv2.drawContours(frame, [cnt], -1, (0,255,0), 2)
 	cv2.imshow("line detect test", frame)
 	agi +=1
 	

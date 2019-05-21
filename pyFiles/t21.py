@@ -18,71 +18,38 @@ def pyDie(video_capture):
 	sys.exit()
 	return
 	
-def fixLane(centerX, centerY, video_capture):
-	fn_frame = video_capture.read()
-	tfix = 0.01
-	if centerX <= 170 or centerX >= 230:
-		#Stop All Movement
-		move_py.movement_func(99)
-		outOfLane = True
-		
-		while outOfLane == True:
-			print("what")
-			if centerX <= 170:
-				#move to left
-				move_py.movement_func(6)
-				time.sleep(tfix)
-				move_py.movement_func(99)
-			elif centerX >= 230:
-				#move to right
-				move_py.movement_func(6)
-				time.sleep(tfix)
-				move_py.movement_func(99)
-				
-			fn_frame = video_capture.read()
-			orig = imutils.resize(fn_frame, width=400)
-			fn_frame = orig
-			
-			imgHSV = cv2.cvtColor(fn_frame,cv2.COLOR_BGR2HSV)
-			foundLane, centerX_LANE, centerY_LANE, width_LANE, height_LANE, rect_angle_LANE = laneCheck(imgHSV)
-			if centerX_LANE <= 230 and centerX_LANE >= 170:
-				#turn Off Movement
-				move_py.movement_func(99)
-				outOfLane = False
-				
-	return fn_frame
-
 def moveGreen(video_capture):
 	greenFound1 = False 
+	sleepTime = 0.3
 	mgLastX = -1
 	while greenFound1 == False:
 		move_py.movement_func(1)
 		print("Greenfound:", greenFound1)
-		time.sleep(0.13)
+		time.sleep(moveforwardspeed)
 		print("nandito move green")
 		move_py.movement_func(99)
 		frame = video_capture.read()
 		frame = imutils.resize(frame, width=400)
 		frame = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
 		sawLane, laneCenterX, laneCenterY, laneWidth, laneHeight, laneAngle = laneCheck(frame)
-		while sawLane and (laneCenterX <= 170 or laneCenterX >= 230):
+		while sawLane and (laneCenterX <= leftLimit or laneCenterX >= rightLimit):
 			mgLastX = laneCenterX
 			frame = video_capture.read()
 			frame = imutils.resize(frame, width=400)
 			frame = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
 			sawLane, laneCenterX, laneCenterY, laneWidth, laneHeight, laneAngle = laneCheck(frame)
-			if(laneCenterX < 170):
+			if(laneCenterX < leftLimit):
 				print("moveGreen naligaw to Left")
 				move_py.movement_func(6)
 				time.sleep(timemoveside)
 				move_py.movement_func(99)
-			elif(laneCenterX > 230):
+			elif(laneCenterX > rightLimit):
 				print("moveGreen naligaw to Right")
 				move_py.movement_func(7)
 				time.sleep(timemoveside)
 				move_py.movement_func(99)
 			
-			time.sleep(0.3)
+			time.sleep(sleepTime)
 		
 		while sawLane == False: 
 			frame = video_capture.read()
@@ -90,22 +57,22 @@ def moveGreen(video_capture):
 			frame = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
 			sawLane, laneCenterX, laneCenterY, laneWidth, laneHeight, laneAngle = laneCheck(frame)
 			
-			if sawLane and (laneCenterX <= 170 or laneCenterX >= 230):
+			if sawLane and (laneCenterX <= leftLimit or laneCenterX >= rightLimit):
 				sawLane = False
 				mgLastX = laneCenterX
 				
-			if(mgLastX < 170):
+			if(mgLastX < leftLimit):
 				print("moveGreen naligaw to Left")
 				move_py.movement_func(6)
 				time.sleep(timemoveside)
 				move_py.movement_func(99)
-			elif(mgLastX > 230):
+			elif(mgLastX > rightLimit):
 				print("moveGreen naligaw to Right")
 				move_py.movement_func(7)
 				time.sleep(timemoveside)
 				move_py.movement_func(99)
 			
-			time.sleep(0.3)
+			time.sleep(sleepTime)
 			
 		centerX = -1
 		centerY = -1
@@ -128,7 +95,7 @@ def moveGreen(video_capture):
 				greenFound1 = True
 				break
 				move_py.movement_func(99)
-		time.sleep(0.3)
+		time.sleep(sleepTime)
 	
 	print("Greenfound:", greenFound1)
 
@@ -201,7 +168,7 @@ def doTurnProcedure(turnDirection, video_capture, findGreen = True):
 		frame = orig
 		imgHSV = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
 		sawLane, laneCenterX, laneCenterY, laneWidth, laneHeight, laneAngle = laneCheck(imgHSV)
-		lgCheck = laneCenterX < 170 or laneCenterX > 230
+		lgCheck = laneCenterX < leftLimit or laneCenterX > rightLimit
 		time.sleep(sleeptime)
 		print("sawLane: ", sawLane, "lgCheck: ", lgCheck, "laneCenter: ", laneCenterX)
 		#cv2.imshow("line detect test1", frame)
@@ -220,11 +187,12 @@ def doStopProcedure():
 	return
 
 
-def doTurnAroundProcedure():
+def doTurnAroundProcedure(video_capture):
 	print("ROBOT TURNING AROUND")
-	move_py.movement_func(1)
-	time.sleep(0.15)
+	#move_py.movement_func(1)
+	#time.sleep(0.15)
 	move_py.movement_func(8)
+	doTurnProcedure(turnDirection, video_capture, False)
 	#time.sleep(3)
 	return
 
@@ -306,16 +274,18 @@ redBuff = 100
 goHome = False
 lastLineDirection = 0
 mayNakitangRed = False
+adjuster = 10
+leftLimit = 170 - adjuster
+rightLimit = 230 + adjuster
 
 video_capture = WebcamVideoStream(src='http://127.0.0.1:8081/').start()
-#video_capture = cv2.VideoCapture(-1)
-#numberOfStops = -1
-#definedStops = array ( 1 => array(1, 5) )
 print(sys.argv[1])
 if len(sys.argv) > 1:
 	definedStops = json.loads(sys.argv[1])
 	numberOfStops = int(sys.argv[2])
-
+	if numberOfStops == 0:
+		print("Not enough parameters given. Exiting")
+		pyDie(video_capture)
 else:
 	print("Not enough parameters given. Exiting")
 	pyDie(video_capture)
@@ -342,16 +312,16 @@ timefrontright = 0.07
 #timefrontleft = 0.1
 #timefrontright = 0.1
 timemoveside = 0.07
+moveforwardspeed = 0.15
+wrongdotmoveforward = 0.1
+iikotsiyapakaunti = 0.2
+firstikotpakaliwa = 0.73
 
 move_py.movement_func(12345)
 ccount = 0
 
 
 while True:
-	wrongdotmoveforward = 0.1
-	iikotsiyapakaunti = 0.2
-	moveforwardspeed = 0.15
-	firstikotpakaliwa = 0.73
 	angle = 0
 	minRedHeight = 80
 	frame = video_capture.read()
@@ -378,9 +348,9 @@ while True:
 	
 	if returning==True:
 		if turnedAround==False:
-			pass
-			#turnedAround = True
-			#doTurnAroundProcedure()
+			#pass
+			turnedAround = True
+			doTurnAroundProcedure(video_capture)
 		
 		if sawDotForStop > 0:
 			print("SAW RED AGAIN, IMMA SUBTRACT")
@@ -493,7 +463,7 @@ while True:
 				#print("farCenter:"+str(farCenterBuff))
 				#IF LANE IS OUT OF BOUNDS
 				print("line centroid: "+str(laneCenterX))
-				if (laneCenterX <= 230 and laneCenterX >= 170)==False and farCenterBuff > 15:
+				if (laneCenterX <= rightLimit and laneCenterX >= leftLimit)==False and farCenterBuff > 15:
 					print("out of bounds na siya")
 					farCenterBuff = 1
 					fs = False
@@ -502,7 +472,7 @@ while True:
 						move_py.movement_func(1)
 						time.sleep(timemoveside)
 						move_py.movement_func(99)
-					elif(laneCenterY > 170):
+					elif(laneCenterY > leftLimit):
 						move_py.movement_func(4)
 						time.sleep(timemoveside)
 						move_py.movement_func(99)
@@ -511,7 +481,7 @@ while True:
 						time.sleep(timemoveside)
 						move_py.movement_func(99)
 						
-					if laneCenterX < 170:
+					if laneCenterX < leftLimit:
 						m=1
 						lastLineDirection = 1 
 						print("nasa pinaka kaliwa")
@@ -519,7 +489,7 @@ while True:
 						time.sleep(timefrontright)
 						move_py.movement_func(99)
 						#time.sleep(0.5)
-					elif laneCenterX > 230:
+					elif laneCenterX > rightLimit:
 						m=1
 						lastLineDirection = -1 
 						print("nasa pinaka kanan")
@@ -559,19 +529,17 @@ while True:
 							sawDotForTurn+=1
 							if str(sawDotForTurn) in definedStops:
 								hasTurned = True
-								print("Yes, para dito siya")
+								print("Yes, papasok siya sa row na to")
 								sawDotForStop = 0 #reset every row
 								if redCenterX < laneCenterX:
 									print("Turn Left:"+str(redCenterX))
 									turnDirection=-1
 									lastLineDirection=-1
-									print("NALIGAW")
 									doTurnProcedure(-1, video_capture)
 								else:
 									print("Turn Right:"+str(redCenterX))
 									turnDirection=1
 									lastLineDirection=1
-									print("NALIGAW")
 									doTurnProcedure(1, video_capture)
 									
 								ccount = len(definedStops[str(sawDotForTurn)])
@@ -654,10 +622,10 @@ while True:
 				#	move_py.movement_func(99)
 				#	time.sleep(999)
 				
-				if(laneCenterX < 170):
+				if(laneCenterX < leftLimit):
 					print("DTP: PUmASOK NALIGAW")
 					doTurnProcedure(-1, video_capture, False)
-				elif(laneCenterX > 230):
+				elif(laneCenterX > rightLimit):
 					print("DTP: PUmASOK NALIGAW")
 					doTurnProcedure(1, video_capture, False)
 				else:
