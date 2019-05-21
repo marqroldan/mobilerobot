@@ -449,7 +449,7 @@ while True:
 				move_py.movement_func(99)
 				continue
 			
-			if laneWidth > 120:
+			if (laneHeight * laneWidth) > 3000:
 				if(returning==True and turnedAround==False and trying==True):
 					turnedAround = True
 					trying = False
