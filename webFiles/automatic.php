@@ -101,6 +101,8 @@ else {
 			});
 			*/
 			//console.log($("#for1").serialize());
+			var g = $(".instructor_list input[type='checkbox']").filter(":checked").length;
+			console.log(g);
 		  $.ajax({
 			type:'post',
 			url:'automatic_post.php',
@@ -108,7 +110,7 @@ else {
 			success:function(response) {
 				console.log(response);
 			  try {
-				 ws.send("go_auto,xyx,"+response);
+				// ws.send("go_auto,xyx,"+response);
 			  }
 			  catch(err) {
 				console.log(err);

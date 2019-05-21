@@ -1,19 +1,24 @@
 <?php
 
 if($_POST) {
-	
+	print_r($_POST);
 	$items = explode("&",$_POST['obj']);
-	$data = array();
-	$count = 0;
-	foreach($items as $item){
-		$e = explode('_',$item);
-		$drow = $e[0];
-		$dseat = $e[1];
-		$dname = $e[2];
-		$data[$drow][$dseat] = str_replace('=on','',urldecode($dname));		
-		$count++;
-	}
 	
+	if(count($items) > 0){
+		$data = array();
+		$count = 0;
+		foreach($items as $item){
+			$e = explode('_',$item);
+			$drow = $e[0];
+			$dseat = $e[1];
+			$dname = $e[2];
+			$data[$drow][$dseat] = str_replace('=on','',urldecode($dname));		
+			$count++;
+		}
+	}
+	else {
+		echo "WARNING: NO ROUTE DETECTED"
+	}
 	
 	/*
 	print_r($data);
