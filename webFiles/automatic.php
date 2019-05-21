@@ -102,25 +102,26 @@ else {
 			*/
 			//console.log($("#for1").serialize());
 			var g = $(".instructor_list input[type='checkbox']").filter(":checked").length;
-			console.log(g);
-		  $.ajax({
-			type:'post',
-			url:'automatic_post.php',
-			data:{obj:$("#for1").serialize()},
-			success:function(response) {
-				console.log(response);
-			  try {
-				// ws.send("go_auto,xyx,"+response);
-			  }
-			  catch(err) {
-				console.log(err);
-				alert("Something bad has happened.");
-			  }
-			},
-			error:function(response) {
-				console.log(response);
+			if (g > 0) {
+				  $.ajax({
+					type:'post',
+					url:'automatic_post.php',
+					data:{obj:$("#for1").serialize()},
+					success:function(response) {
+						console.log(response);
+					  try {
+						// ws.send("go_auto,xyx,"+response);
+					  }
+					  catch(err) {
+						console.log(err);
+						alert("Something bad has happened.");
+					  }
+					},
+					error:function(response) {
+						console.log(response);
+					}
+				  });
 			}
-		  });
 		});	
 
 
