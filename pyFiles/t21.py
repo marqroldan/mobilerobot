@@ -18,6 +18,66 @@ def pyDie(video_capture):
 	sys.exit()
 	return
 	
+def delayRightWheel():
+	move_py.movement_func(99)
+	move_py.movement_func(10)
+	time.sleep(0.03)
+	move_py.movement_func(99)
+
+def lineFix1(video_capture, lastX = -1):
+	#Function kapag may nakikita pang blue pero wala sa gitna
+	sleepTime = 0.3
+	frame = video_capture.read()
+	frame = imutils.resize(frame, width=400)
+	frame = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
+	sawLane, laneCenterX, laneCenterY, laneWidth, laneHeight, laneAngle = laneCheck(frame)
+	while sawLane and (laneCenterX <= leftLimit or laneCenterX >= rightLimit):
+		lastX = laneCenterX
+		frame = video_capture.read()
+		frame = imutils.resize(frame, width=400)
+		frame = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
+		sawLane, laneCenterX, laneCenterY, laneWidth, laneHeight, laneAngle = laneCheck(frame)
+		if(laneCenterX < leftLimit):
+			print("moveGreen naligaw to Left")
+			move_py.movement_func(6)
+			time.sleep(timemoveside)
+			delayRightWheel()
+		elif(laneCenterX > rightLimit):
+			print("moveGreen naligaw to Right")
+			move_py.movement_func(7)
+			time.sleep(timemoveside)
+			move_py.movement_func(99)
+		
+		time.sleep(sleepTime)
+	return lastX, sawLane
+
+def lineFix2(video_capture, sawLane, lastX = -1):
+	#Function kapag walang nakikita na blue
+	sleepTime = 0.3
+	while sawLane == False: 
+		frame = video_capture.read()
+		frame = imutils.resize(frame, width=400)
+		frame = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
+		sawLane, laneCenterX, laneCenterY, laneWidth, laneHeight, laneAngle = laneCheck(frame)
+		
+		if sawLane and (laneCenterX <= leftLimit or laneCenterX >= rightLimit):
+			sawLane = False
+			lastX = laneCenterX
+			
+		if(lastX < leftLimit):
+			print("moveGreen naligaw to Left")
+			move_py.movement_func(6)
+			time.sleep(timemoveside)
+			delayRightWheel()
+		elif(lastX > rightLimit):
+			print("moveGreen naligaw to Right")
+			move_py.movement_func(7)
+			time.sleep(timemoveside)
+			move_py.movement_func(99)
+		
+		time.sleep(sleepTime)
+	return lastX, sawLane
+
 def moveGreen(video_capture):
 	greenFound1 = False 
 	sleepTime = 0.3
@@ -27,53 +87,14 @@ def moveGreen(video_capture):
 		print("Greenfound:", greenFound1)
 		time.sleep(moveforwardspeed)
 		print("nandito move green")
-		move_py.movement_func(99)
+		#move_py.movement_func(99)
+		delayRightWheel()
+		mgLastX, sawLane= lineFix1(video_capture, mgLastX)
+		mgLastX, sawLane= lineFix2(video_capture, sawLane, mgLastX)
+		
 		frame = video_capture.read()
 		frame = imutils.resize(frame, width=400)
 		frame = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
-		sawLane, laneCenterX, laneCenterY, laneWidth, laneHeight, laneAngle = laneCheck(frame)
-		while sawLane and (laneCenterX <= leftLimit or laneCenterX >= rightLimit):
-			mgLastX = laneCenterX
-			frame = video_capture.read()
-			frame = imutils.resize(frame, width=400)
-			frame = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
-			sawLane, laneCenterX, laneCenterY, laneWidth, laneHeight, laneAngle = laneCheck(frame)
-			if(laneCenterX < leftLimit):
-				print("moveGreen naligaw to Left")
-				move_py.movement_func(6)
-				time.sleep(timemoveside)
-				move_py.movement_func(99)
-			elif(laneCenterX > rightLimit):
-				print("moveGreen naligaw to Right")
-				move_py.movement_func(7)
-				time.sleep(timemoveside)
-				move_py.movement_func(99)
-			
-			time.sleep(sleepTime)
-		
-		while sawLane == False: 
-			frame = video_capture.read()
-			frame = imutils.resize(frame, width=400)
-			frame = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
-			sawLane, laneCenterX, laneCenterY, laneWidth, laneHeight, laneAngle = laneCheck(frame)
-			
-			if sawLane and (laneCenterX <= leftLimit or laneCenterX >= rightLimit):
-				sawLane = False
-				mgLastX = laneCenterX
-				
-			if(mgLastX < leftLimit):
-				print("moveGreen naligaw to Left")
-				move_py.movement_func(6)
-				time.sleep(timemoveside)
-				move_py.movement_func(99)
-			elif(mgLastX > rightLimit):
-				print("moveGreen naligaw to Right")
-				move_py.movement_func(7)
-				time.sleep(timemoveside)
-				move_py.movement_func(99)
-			
-			time.sleep(sleepTime)
-			
 		centerX = -1
 		centerY = -1
 		width = 0
@@ -84,13 +105,11 @@ def moveGreen(video_capture):
 		_, contours, hierarchy = cv2.findContours(imageGreen,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
 		areas = [cv2.contourArea(c) for c in contours]
 		if np.any(areas):
-			foundLane = True
-			allTry = 1
 			max_index = np.argmax(areas)
 			cnt=contours[max_index]
 			(centerX, centerY), (width, height), rect_angle = cv2.minAreaRect(cnt)
 			print("Saw something")
-			if (width * height) > 3000:
+			if (width * height) > 4000:
 				print("yuh seen")
 				greenFound1 = True
 				break
@@ -99,12 +118,37 @@ def moveGreen(video_capture):
 	
 	print("Greenfound:", greenFound1)
 
+def getPastRed(video_capture):
+	frame = video_capture.read()
+	frame = imutils.resize(frame, width=400)
+	frame = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
+	sawRed, redCenterX, redCenterY, redWidth, redHeight, redAngle = redCheck(frame)
+	mgLastX = -1
+	while sawRed == True:
+		print("Trying to get past red")
+		move_py.movement_func(1)
+		time.sleep(moveforwardspeed)
+		#move_py.movement_func(99)
+		delayRightWheel()
+		frame = video_capture.read()
+		frame = imutils.resize(frame, width=400)
+		frame = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
+		sawRed, redCenterX, redCenterY, redWidth, redHeight, redAngle = redCheck(frame)
+		if sawRed == False:
+			break
+		else:
+			mgLastX, sawLane = lineFix1(video_capture, mgLastX)
+			mgLastX, sawLane = lineFix2(video_capture, sawLane, mgLastX)
+		time.sleep(0.3)
+		
+		
+
 def doTurnProcedure(turnDirection, video_capture, findGreen = True):
 	print("TURNING: " + str(turnDirection))
 	if findGreen:
 		moveGreen(video_capture)
 	sleeptime = 0.5;
-	rotatespeed = 0.07
+	rotatespeed = 0.11
 	if turnDirection < 0:
 		#left
 		dflag = 6
@@ -112,7 +156,7 @@ def doTurnProcedure(turnDirection, video_capture, findGreen = True):
 		dflag = 7
 		
 	move_py.movement_func(dflag)
-	time.sleep(0.55)
+	time.sleep(0.15)
 	move_py.movement_func(99)
 	frame = video_capture.read()
 	orig = imutils.resize(frame, width=400)
@@ -182,15 +226,16 @@ def doStopProcedure():
 	print("ROBOT STOPPING")
 	move_py.movement_func(1)
 	time.sleep(0.8)
-	move_py.movement_func(99)
+	delayRightWheel()
 	time.sleep(3)
 	return
 
 
 def doTurnAroundProcedure(video_capture):
 	print("ROBOT TURNING AROUND")
-	#move_py.movement_func(1)
-	#time.sleep(0.15)
+	move_py.movement_func(1)
+	time.sleep(0.15)
+	delayRightWheel()
 	move_py.movement_func(8)
 	doTurnProcedure(turnDirection, video_capture, False)
 	#time.sleep(3)
@@ -274,7 +319,7 @@ redBuff = 100
 goHome = False
 lastLineDirection = 0
 mayNakitangRed = False
-adjuster = 10
+adjuster = 0
 leftLimit = 170 - adjuster
 rightLimit = 230 + adjuster
 
@@ -312,7 +357,7 @@ timefrontright = 0.07
 #timefrontleft = 0.1
 #timefrontright = 0.1
 timemoveside = 0.07
-moveforwardspeed = 0.15
+moveforwardspeed = 0.13
 wrongdotmoveforward = 0.1
 iikotsiyapakaunti = 0.2
 firstikotpakaliwa = 0.73
@@ -392,25 +437,25 @@ while True:
 					#time.sleep(0.1*(minRedHeight / (difference)))
 					#move_py.movement_func(99)
 					if numberOfStops==0 and goHome:
-						move_py.movement_func(1)
-						time.sleep(0.1)
-						move_py.movement_func(99)
-						print("DTP MAY NAKITA")
-						doTurnProcedure(1,video_capture)
-						frame = video_capture.read()
-						orig = imutils.resize(frame, width=400)
-						frame = orig
-						imgHSV = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
-						sawRed, redCenterX, redCenterY, redWidth, redHeight, redAngle = redCheck(imgHSV)
-						while sawRed==False:
-							frame = video_capture.read()
-							orig = imutils.resize(frame, width=400)
-							frame = orig
-							imgHSV = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
-							sawRed, redCenterX, redCenterY, redWidth, redHeight, redAngle = redCheck(imgHSV)
-							move_py.movement_func(1)
-							time.sleep(moveforwardspeed)
-							move_py.movement_func(99)
+						#move_py.movement_func(1)
+						#time.sleep(0.1)
+						#delayRightWheel()
+						#print("DTP MAY NAKITA")
+						#doTurnProcedure(1,video_capture)
+						#frame = video_capture.read()
+						#orig = imutils.resize(frame, width=400)
+						#frame = orig
+						#imgHSV = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
+						#sawRed, redCenterX, redCenterY, redWidth, redHeight, redAngle = redCheck(imgHSV)
+						#while sawRed==False:
+						#	frame = video_capture.read()
+						#	orig = imutils.resize(frame, width=400)
+						#	frame = orig
+						#	imgHSV = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
+						#	sawRed, redCenterX, redCenterY, redWidth, redHeight, redAngle = redCheck(imgHSV)
+						#	move_py.movement_func(1)
+						#	time.sleep(moveforwardspeed)
+						#	delayRightWheel()
 						pyDie(video_capture)
 			else:
 				#print("Kulang pa sa buff")
@@ -457,12 +502,12 @@ while True:
 					trying=True
 					move_py.movement_func(6)
 					time.sleep(firstikotpakaliwa)
-					move_py.movement_func(99)
+					delayRightWheel()
 				## DIRECTION CHECKER 1
 				farCenterBuff +=1
 				#print("farCenter:"+str(farCenterBuff))
 				#IF LANE IS OUT OF BOUNDS
-				print("line centroid: "+str(laneCenterX))
+				#print("line centroid: "+str(laneCenterX))
 				if (laneCenterX <= rightLimit and laneCenterX >= leftLimit)==False and farCenterBuff > 15:
 					print("out of bounds na siya")
 					farCenterBuff = 1
@@ -471,7 +516,7 @@ while True:
 					if(laneCenterY < 130):
 						move_py.movement_func(1)
 						time.sleep(timemoveside)
-						move_py.movement_func(99)
+						delayRightWheel()
 					elif(laneCenterY > leftLimit):
 						move_py.movement_func(4)
 						time.sleep(timemoveside)
@@ -479,7 +524,7 @@ while True:
 					else:
 						move_py.movement_func(1)
 						time.sleep(timemoveside)
-						move_py.movement_func(99)
+						delayRightWheel()
 						
 					if laneCenterX < leftLimit:
 						m=1
@@ -487,7 +532,7 @@ while True:
 						print("nasa pinaka kaliwa")
 						move_py.movement_func(6)
 						time.sleep(timefrontright)
-						move_py.movement_func(99)
+						delayRightWheel()
 						#time.sleep(0.5)
 					elif laneCenterX > rightLimit:
 						m=1
@@ -547,8 +592,10 @@ while True:
 							else:
 								move_py.movement_func(1)
 								time.sleep(wrongdotmoveforward)
-								move_py.movement_func(99)
+								delayRightWheel()
 								print("Nope, hindi siya para dito: "+str(sawDotForTurn))
+								moveGreen(video_capture)
+								#getPastRed(video_capture)
 						else:
 							if(numberOfStops > 0):
 								sawDotForStop+=1
@@ -568,6 +615,7 @@ while True:
 									#dito yung nakakita ng stopa
 									#time.sleep(5)
 									if False:
+										moveGreen(video_capture)
 										move_py.AutoPinGo()
 										while (move_py.ResponsePinStop()==False):
 											print("oo false parin");
@@ -585,6 +633,8 @@ while True:
 									if ccount < 1:
 										returning = True
 										trying=False
+								else: 
+									moveGreen(video_capture)
 							except:
 								sawDotForStop = sawDotForStop - 1
 					else:
@@ -661,7 +711,7 @@ while True:
 					print('nah')
 					move_py.movement_func(6)
 					time.sleep(iikotsiyapakaunti)
-					move_py.movement_func(99)
+					delayRightWheel()
 				
 				#ntry+=1
 				#if(ntry>5):
@@ -680,7 +730,7 @@ while True:
 			move_py.movement_func(6)
 			print('pero dito pumasok hehe')
 			time.sleep(iikotsiyapakaunti)
-			move_py.movement_func(99)
+			delayRightWheel()
 		else:
 			moveTry +=1
 			allTry +=1
@@ -689,7 +739,7 @@ while True:
 					move_py.movement_func(6)
 					lastLineDirection=1
 					time.sleep(timemoveside)
-					move_py.movement_func(99)
+					delayRightWheel()
 				elif(lastLineDirection < 0):
 					move_py.movement_func(7)
 					time.sleep(timemoveside)
@@ -734,7 +784,7 @@ while True:
 				lastLineDirection = 1 
 				move_py.movement_func(6)
 				time.sleep(timefrontright)
-				move_py.movement_func(99)
+				delayRightWheel()
 				continue
 			
 			else:
@@ -749,15 +799,13 @@ while True:
 				if agi > 15:
 					move_py.movement_func(1)
 					time.sleep(moveforwardspeed)
-					move_py.movement_func(99)
+					delayRightWheel()
 					agi = 1
-	#else:
-	#	if fs == True:
-	#		if agi > 15:
-	#		move_py.movement_func(1)
-	#		time.sleep(moveforwardspeed)
-	#		move_py.movement_func(99)
-	#		agi = 1
+	else:
+		print("Dito ata pumasok")
+		move_py.movement_func(1)
+		time.sleep(moveforwardspeed)
+		delayRightWheel()
 		
 	agi +=1
 	

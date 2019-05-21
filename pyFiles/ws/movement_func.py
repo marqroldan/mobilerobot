@@ -171,6 +171,10 @@ def movement_func(arg1):
 			rotateRight()
 			time.sleep(1.2)
 			turnOffPins()
+		elif arg1==10:
+			#rightWheelOn
+			#wiringpi.digitalWrite(0, 1)
+			wiringpi.digitalWrite(2, 1)
 		elif arg1==12345:
 			autoFile = open("masterOff.txt","w")
 			autoFile.write('0')

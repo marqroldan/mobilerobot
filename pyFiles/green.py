@@ -158,7 +158,7 @@ while True:
 			
 	#		cv2.rectangle(frame, (int(arx), int(ary)), (int(arx+width), int(ary+height)), (0, 255, 0), 2)
 	#		cv2.drawContours(frame, [cnt], -1, (0,255,0), 2)
-	cv2.imshow("line detect test", frame)
+	cv2.imshow("line detect test", imageGreen)
 	agi +=1
 	
 	if(agi>=20): 
